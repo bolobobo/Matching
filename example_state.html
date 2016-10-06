@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<!-- ToDo: appcache, manifest in service-worker.js-->
+<html lang="eng" ng-app="myApp" ng-strict-di>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+        <meta name="description" content="Matching game, you can play it with your friends">   
+        <title>Matching</title>
+
+        <!--ToDo: need to add some useful css-->
+        <link rel="stylesheet" type="text/css" href="css/game.css">
+        <link crossorigin="anonymous" rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.css">
+        
+        <!-- ToDo: build:js js/everything.min.js -->
+        <script src="lib/angular.js"></script>
+        <script>
+            angular.module('myApp', ['gameServices']).run(function () { resizeGameAreaService.setWidthToHeight(1); });
+        </script>
+    </head>
+
+    <body>
+        <div id="gameOverlay">
+            <div id="gameMenu" style="position: absolute; top: 0%; width: 100%; height: 10%">
+                <h1>Matching </h1>
+                <div id="competitor">
+                </div>
+                <div id="myturn">
+                </div>
+            </div>
+            <div id="gameArea" style="position: absolute; top: 10%; width: 100%; height: 80%">
+                <div class="gameRow" style="position: absolute; top: 0%; width: 100%; height: 12.5%">
+                    <div class="gameBox" Style="position: absolute; left: 0%; width: 12.5%; height: 100%; background-color: green" >
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 12.5%; width: 12.5%; height: 100%; background-color: purple">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 25%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 37.5%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 50%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 62.5%; width: 12.5%; height: 100%">
+                    </div>     
+                    <div class="gameBox" Style="position: absolute; left: 75%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 87.5%; width: 12.5%; height: 100%">
+                    </div>               
+                </div>
+                <div class="gameRow" style="position: absolute; top: 12.5%; width: 100%; height: 12.5%">
+                    <div class="gameBox" Style="position: absolute; left: 0%; width: 12.5%; height: 100%; background-color: red">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 12.5%; width: 12.5%; height: 100%; background-color: yellow">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 25%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 37.5%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 50%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 62.5%; width: 12.5%; height: 100%">
+                    </div>     
+                    <div class="gameBox" Style="position: absolute; left: 75%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 87.5%; width: 12.5%; height: 100%">
+                    </div>   
+                </div>
+                <div class="gameRow" style="position: absolute; top: 25%; width: 100%; height: 12.5%">
+                    <div class="gameBox" Style="position: absolute; left: 0%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 12.5%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 25%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 37.5%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 50%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 62.5%; width: 12.5%; height: 100%">
+                    </div>     
+                    <div class="gameBox" Style="position: absolute; left: 75%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 87.5%; width: 12.5%; height: 100%">
+                    </div>         
+                </div>
+                <div class="gameRow" style="position: absolute; top: 37.5%; width: 100%; height: 12.5%">
+                    <div class="gameBox" Style="position: absolute; left: 0%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 12.5%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 25%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 37.5%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 50%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 62.5%; width: 12.5%; height: 100%">
+                    </div>     
+                    <div class="gameBox" Style="position: absolute; left: 75%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 87.5%; width: 12.5%; height: 100%">
+                    </div>   
+                </div>
+                <div class="gameRow" style="position: absolute; top: 50%; width: 100%; height: 12.5%">
+                    <div class="gameBox" Style="position: absolute; left: 0%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 12.5%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 25%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 37.5%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 50%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 62.5%; width: 12.5%; height: 100%">
+                    </div>     
+                    <div class="gameBox" Style="position: absolute; left: 75%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 87.5%; width: 12.5%; height: 100%">
+                    </div>     
+                </div>
+                <div class="gameRow" style="position: absolute; top: 62.5%; width: 100%; height: 12.5%">
+                    <div class="gameBox" Style="position: absolute; left: 0%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 12.5%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 25%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 37.5%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 50%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 62.5%; width: 12.5%; height: 100%">
+                    </div>     
+                    <div class="gameBox" Style="position: absolute; left: 75%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 87.5%; width: 12.5%; height: 100%">
+                    </div>   
+                </div>
+                <div class="gameRow" style="position: absolute; top: 75%; width: 100%; height: 12.5%">
+                    <div class="gameBox" Style="position: absolute; left: 0%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 12.5%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 25%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 37.5%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 50%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 62.5%; width: 12.5%; height: 100%">
+                    </div>     
+                    <div class="gameBox" Style="position: absolute; left: 75%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 87.5%; width: 12.5%; height: 100%">
+                    </div>   
+                </div>
+                <div class="gameRow" style="position: absolute; top: 87.5%; width: 100%; height: 12.5%">
+                    <div class="gameBox" Style="position: absolute; left: 0%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 12.5%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 25%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 37.5%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 50%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 62.5%; width: 12.5%; height: 100%">
+                    </div>     
+                    <div class="gameBox" Style="position: absolute; left: 75%; width: 12.5%; height: 100%">
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 87.5%; width: 12.5%; height: 100%">
+                    </div>   
+                </div>
+            </div>
+            <div id="gameHelper" style="position: absolute; top: 93%;>
+                <button type="button" class="btn btn-primary" ng-click="game.isHelpModalShown = false">
+                    help
+                </button>
+            </div>
+        </div>
+    </body>
+</html>

@@ -7,18 +7,85 @@
         <meta name="description" content="Matching game, you can play it with your friends">   
         <title>Matching</title>
 
+        <!--ToDo: need to add some useful css-->
         <link rel="stylesheet" type="text/css" href="css/game.css">
+        <link crossorigin="anonymous" rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.css">
+        
         <!-- ToDo: build:js js/everything.min.js -->
+        <script src="lib/angular.js"></script>
 
     </head>
+
     <body>
-        <div id="gameGen">
+        <div id="gameOverlay">
             <div id="gameMenu">
             </div>
             <div id="gameArea">
-                <div class="gameBox"></div>
+                <div ng-repeat="row in [0, 1, 2, 3, 4, 5, 6, 7]" style="position:absolute; top:{{row * 12.5}}%; left:0; width:100%; height:12.5%;">
+                    <div ng-repeat="col in [0, 1, 2, 3, 4, 5, 6, 7]" 
+                    style="position:absolute; top:0; left:{{col * 12.5}}%; width:12.5%; height:100%;"
+                    ng-class="{r: col < 7, b: row < 7}"
+                    ng-click="game.cellClicked(row, col)"
+                    id="{{'e2e_test_div_' + row + 'x' + col}}">
+                        <div style="width:100%; height: 100%"
+                             ng-class="{slowlyAppear: game.shouldSlowlyAppear(row, col)}"
+                             ng-if="game.shouldShowImage(row, col)">
+                             <!--<img src="https://img3.doubanio.com/view/photo/photo/public/p2377207110.jpg">-->
+                             <div style="width:100%; height: 100%"
+                                ng-class="{slowlyAppear: game.shouldSlowlyAppear(row, col)}"
+                                ng-if="game.shouldShowImage(row, col)">
+                                <svg ng-if="game.isPieceO(row, col)"
+                                    id="{{'e2e_test_pieceO_' + row + 'x' + col}}"
+                                    width="100%" height="100%">
+                                    <circle cx="50%" cy="50%" r="27%" stroke="blue" stroke-width="5%" fill="white" />
+                                </svg>
+                                <svg ng-if="game.isPieceX(row, col)"
+                                    id="{{'e2e_test_pieceX_' + row + 'x' + col}}"
+                                    width="100%" height="100%">
+                                    <line x1="25%" y1="25%"
+                                         x2="75%" y2="75%"
+                                        stroke="red"
+                                        stroke-width="5%"/>
+                                    <line x1="25%" y1="75%"
+                                        x2="75%" y2="25%"
+                                        stroke="red"
+                                        stroke-width="5%"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--<div class="gameRow" style="position: absolute; top: 0%; width: 100%; height: 12.5%">
+                    <div class="gameBox" Style="position: absolute; left: 0%; width: 12.5%; height: 100%">
+                    </div>
+
+                </div>
+                <div class="gameRow" style="position: absolute; top: 12.5%; width: 100%; height: 12.5%">
+                    
+                </div>
+                <div class="gameRow" style="position: absolute; top: 25%; width: 100%; height: 12.5%">
+                    
+                </div>
+                <div class="gameRow" style="position: absolute; top: 37.5%; width: 100%; height: 12.5%">
+                    
+                </div>
+                <div class="gameRow" style="position: absolute; top: 50%; width: 100%; height: 12.5%">
+                    
+                </div>
+                <div class="gameRow" style="position: absolute; top: 62.5%; width: 100%; height: 12.5%">
+                    
+                </div>
+                <div class="gameRow" style="position: absolute; top: 75%; width: 100%; height: 12.5%">
+                    
+                </div>
+                <div class="gameRow" style="position: absolute; top: 87.5%; width: 100%; height: 12.5%">
+                    -->
+                <!--</div>-->
             </div>
             <div id="gameHelper">
+                <button type="button" class="btn btn-primary" ng-click="game.isHelpModalShown = false">
+                    help
+                </button>
             </div>
         </div>
     </body>
