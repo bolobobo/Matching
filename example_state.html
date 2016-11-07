@@ -11,27 +11,42 @@
         <link rel="stylesheet" type="text/css" href="css/game.css">
         <link crossorigin="anonymous" rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.css">
         
+        <!--Loading code to resize gameArea according to some chosen width-to-height ratio.
+        In Matching, the ratio is 1 (i.e., width/height = 1)-->
         <!-- ToDo: build:js js/everything.min.js -->
         <script src="lib/angular.js"></script>
+        <script src="lib/turnBasedServices.3.js"></script>
         <script>
-            angular.module('myApp', ['gameServices']).run(function () { resizeGameAreaService.setWidthToHeight(1); });
+             angular.module('myApp', ['gameServices']).run(function () { resizeGameAreaService.setWidthToHeight(0.8); });
         </script>
+        
     </head>
 
     <body>
-        <div id="gameOverlay">
+        <div id="gameArea">
             <div id="gameMenu" style="position: absolute; top: 0%; width: 100%; height: 10%">
-                <h1>Matching </h1>
-                <div id="competitor">
-                </div>
-                <div id="myturn">
+                <div class="center">
+                <div class="div-inline1" ng-if="!game.isPassAndPlay()" ng-class="{currentPlayer: (game.isCurrentPlayerIndex(0) && game.isMyTurn()) || (game.isCurrentPlayerIndex(1) && !game.isMyTurn())}">{{ game.getName() | translate }}: {{game.state.scores[0]}}</div> 
+                <div class="div-inline1 currentPlayer" ng-if="game.isPassAndPlay()">{{ 'YOUR_SCORE' | translate }}: {{game.state.scores[0]+game.state.scores[1]}}/{{game.getHighestScore()}}</div>
+                <div class="div-inline2">&nbsp;&nbsp;{{'LEFT_TURNS' | translate}} : {{20-game.state.current_turn}}&nbsp;&nbsp;</div> 
+                <div class="div-inline3" ng-if="!game.isPassAndPlay()" ng-class="{currentPlayer: (game.isCurrentPlayerIndex(1) && game.isMyTurn()) || (game.isCurrentPlayerIndex(0) && !game.isMyTurn())}">{{ game.getOppoName() | translate }}: {{game.state.scores[1]}}</div> 
+                <div class="div-inline3" ng-if="game.isPassAndPlay()" >{{ 'HIGHEST_SCORE' | translate }}: {{game.getHighestScoreGlobally()}}</div>
+                <div style="clear:both"></div>
                 </div>
             </div>
-            <div id="gameArea" style="position: absolute; top: 10%; width: 100%; height: 80%">
+            <!--the 8 * 8 game grid-->
+            <div style="position: absolute; top: 10%; width: 90%; height: 72%; margin-left: 5%"  >
+                <!--the 1st row with 8 columns-->
                 <div class="gameRow" style="position: absolute; top: 0%; width: 100%; height: 12.5%">
-                    <div class="gameBox" Style="position: absolute; left: 0%; width: 12.5%; height: 100%; background-color: green" >
+                    <div class="gameBox" Style="position: absolute; left: 0%; width: 12.5%; height: 100%" >
+                        <svg width="100%" height="100%">
+                            <rect rx="10%" ry="10%" width="100%" height="100%" style="fill:rgb(71, 209, 71); stroke-width:1.5px; stroke:grey"/>
+                        </svg>
                     </div>
-                    <div class="gameBox" Style="position: absolute; left: 12.5%; width: 12.5%; height: 100%; background-color: purple">
+                    <div class="gameBox" Style="position: absolute; left: 12.5%; width: 12.5%; height: 100%">
+                        <svg width="100%" height="100%">
+                            <rect rx="10%" ry="10%" width="100%" height="100%" style="fill:rgb(51, 204, 255); stroke-width:1.5px; stroke:grey"/>
+                        </svg>
                     </div>
                     <div class="gameBox" Style="position: absolute; left: 25%; width: 12.5%; height: 100%">
                     </div>
@@ -46,10 +61,17 @@
                     <div class="gameBox" Style="position: absolute; left: 87.5%; width: 12.5%; height: 100%">
                     </div>               
                 </div>
+                <!--the 2nd row with 8 columns-->
                 <div class="gameRow" style="position: absolute; top: 12.5%; width: 100%; height: 12.5%">
-                    <div class="gameBox" Style="position: absolute; left: 0%; width: 12.5%; height: 100%; background-color: red">
+                    <div class="gameBox" Style="position: absolute; left: 0%; width: 12.5%; height: 100%">
+                        <svg width="100%" height="100%">
+                            <rect rx="10%" ry="10%" width="100%" height="100%" style="fill:rgb(255, 128, 170); stroke-width:1.5px; stroke:grey"/>
+                        </svg>
                     </div>
-                    <div class="gameBox" Style="position: absolute; left: 12.5%; width: 12.5%; height: 100%; background-color: yellow">
+                    <div class="gameBox" Style="position: absolute; left: 12.5%; width: 12.5%; height: 100%">
+                        <svg width="100%" height="100%">
+                            <rect rx="10%" ry="10%" width="100%" height="100%" style="fill:rgb(246, 246, 85); stroke-width:1.5px; stroke:grey"/>
+                        </svg>
                     </div>
                     <div class="gameBox" Style="position: absolute; left: 25%; width: 12.5%; height: 100%">
                     </div>
@@ -64,6 +86,7 @@
                     <div class="gameBox" Style="position: absolute; left: 87.5%; width: 12.5%; height: 100%">
                     </div>   
                 </div>
+                <!--the 3rd row with 8 columns-->
                 <div class="gameRow" style="position: absolute; top: 25%; width: 100%; height: 12.5%">
                     <div class="gameBox" Style="position: absolute; left: 0%; width: 12.5%; height: 100%">
                     </div>
@@ -82,6 +105,7 @@
                     <div class="gameBox" Style="position: absolute; left: 87.5%; width: 12.5%; height: 100%">
                     </div>         
                 </div>
+                <!--the 4th row with 8 columns-->
                 <div class="gameRow" style="position: absolute; top: 37.5%; width: 100%; height: 12.5%">
                     <div class="gameBox" Style="position: absolute; left: 0%; width: 12.5%; height: 100%">
                     </div>
@@ -100,6 +124,7 @@
                     <div class="gameBox" Style="position: absolute; left: 87.5%; width: 12.5%; height: 100%">
                     </div>   
                 </div>
+                <!--the 5th row with 8 columns-->
                 <div class="gameRow" style="position: absolute; top: 50%; width: 100%; height: 12.5%">
                     <div class="gameBox" Style="position: absolute; left: 0%; width: 12.5%; height: 100%">
                     </div>
@@ -118,6 +143,7 @@
                     <div class="gameBox" Style="position: absolute; left: 87.5%; width: 12.5%; height: 100%">
                     </div>     
                 </div>
+                <!--the 6th row with 8 columns-->
                 <div class="gameRow" style="position: absolute; top: 62.5%; width: 100%; height: 12.5%">
                     <div class="gameBox" Style="position: absolute; left: 0%; width: 12.5%; height: 100%">
                     </div>
@@ -136,6 +162,7 @@
                     <div class="gameBox" Style="position: absolute; left: 87.5%; width: 12.5%; height: 100%">
                     </div>   
                 </div>
+                <!--the 7th row with 8 columns-->
                 <div class="gameRow" style="position: absolute; top: 75%; width: 100%; height: 12.5%">
                     <div class="gameBox" Style="position: absolute; left: 0%; width: 12.5%; height: 100%">
                     </div>
@@ -154,6 +181,7 @@
                     <div class="gameBox" Style="position: absolute; left: 87.5%; width: 12.5%; height: 100%">
                     </div>   
                 </div>
+                <!--the 8th row with 8 columns-->
                 <div class="gameRow" style="position: absolute; top: 87.5%; width: 100%; height: 12.5%">
                     <div class="gameBox" Style="position: absolute; left: 0%; width: 12.5%; height: 100%">
                     </div>
@@ -173,10 +201,66 @@
                     </div>   
                 </div>
             </div>
-            <div id="gameHelper" style="position: absolute; top: 93%;>
-                <button type="button" class="btn btn-primary" ng-click="game.isHelpModalShown = false">
-                    help
-                </button>
+
+            <!--the 3 prepare boxes to be put into the game board-->
+            <div id="gamePrepare" style="position: absolute; top: 83%; width: 90%; height:8%; margin-left: 5%">
+                <div class="rowBox" Style="position: absolute; left: 0%; width: 33%; height: 100%">
+                    <div class="gameBox" Style="position: absolute; left: 0%; width: 33.3%; height: 100%">
+                        <svg width="100%" height="100%">
+                            <rect rx="10%" ry="10%" width="100%" height="100%" style="fill:rgb(255, 128, 170); stroke-width:1.5px; stroke:grey"/>
+                        </svg>
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 33.3%; width: 33.3%; height: 100%">
+                         <svg width="100%" height="100%">
+                            <rect rx="10%" ry="10%" width="100%" height="100%" style="fill:rgb(51, 204, 255); stroke-width:1.5px; stroke:grey"/>
+                        </svg>                       
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 66.3%; width: 33.3%; height: 100%">
+                         <svg width="100%" height="100%">
+                            <rect rx="10%" ry="10%" width="100%" height="100%" style="fill:rgb(246, 246, 85); stroke-width:1.5px; stroke:grey"/>
+                        </svg>                       
+                    </div>
+                </div>
+                <div class="rowBox" Style="position: absolute; left: 33.5%; width: 33%; height: 100%;">
+                    <div class="gameBox" Style="position: absolute; left: 0%; width: 33.3%; height: 100%">
+                        <svg width="100%" height="100%">
+                            <rect rx="10%" ry="10%" width="100%" height="100%" style="fill:rgb(71, 209, 71); stroke-width:1.5px; stroke:grey"/>
+                        </svg>
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 33.3%; width: 33.3%; height: 100%">
+                        <!--<svg width="100%" height="100%">
+                            <rect rx="10%" ry="10%" width="100%" height="100%" style="fill:rgb(71, 209, 71); stroke-width:1.5px; stroke:grey"/>
+                        </svg> -->
+                        <img src="img/star.png">                       
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 66.3%; width: 33.3%; height: 100%">
+                        <svg width="100%" height="100%">
+                            <rect rx="10%" ry="10%" width="100%" height="100%" style="fill:rgb(246, 246, 85); stroke-width:1.5px; stroke:grey"/>
+                        </svg>                            
+                    </div>                   
+                </div>
+                <div class="rowBox" Style="position: absolute; left: 67%; width: 33.3%; height: 100%;">
+                    <div class="gameBox" Style="position: absolute; left: 0%; width: 33.3%; height: 100%">
+                        <svg width="100%" height="100%">
+                            <rect rx="10%" ry="10%" width="100%" height="100%" style="fill:rgb(246, 246, 85); stroke-width:1.5px; stroke:grey"/>
+                        </svg>
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 33.3%; width: 33.3%; height: 100%">
+                         <svg width="100%" height="100%">
+                            <rect rx="10%" ry="10%" width="100%" height="100%" style="fill:rgb(255, 128, 170); stroke-width:1.5px; stroke:grey"/>
+                        </svg>                       
+                    </div>
+                    <div class="gameBox" Style="position: absolute; left: 66.3%; width: 33.3%; height: 100%">
+                         <svg width="100%" height="100%">
+                            <rect rx="10%" ry="10%" width="100%" height="100%" style="fill:rgb(51, 204, 255); stroke-width:1.5px; stroke:grey"/>
+                        </svg>                       
+                    </div>                    
+                </div>
+            </div>
+
+            <!--the operation menu of the game with the helper-->
+            <div id="gameHelper" style="position: absolute; top: 92%; width: 90%; height:8%; margin-left: 5%">
+                <button type="button" class="start" ng-click="game.isHelpModalShown = false" aria-label="start"><span aria-hidden="true">start</span></button>
             </div>
         </div>
     </body>
