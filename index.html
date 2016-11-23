@@ -16,6 +16,7 @@
         <!-- ToDo: build:js js/everything.min.js -->
         <script src="lib/angular.js"></script>
         <script src="lib/turnBasedServices.3.js"></script>
+        <script src="ts_output_readonly_do_NOT_change_manually/src/game.js"></script>
         <script>
              angular.module('myApp', ['gameServices']).run(function () { resizeGameAreaService.setWidthToHeight(0.8); });
         </script>
@@ -132,6 +133,7 @@
             <!--the operation menu of the game with the helper-->
             <div id="gameHelper" style="position: absolute; top: 92%; width: 90%; height:8%; margin-left: 5%">
                 <button type="button" class="start" ng-click="game.isHelpModalShown = false" aria-label="start"><span aria-hidden="true">start</span></button>
+                <p ng-controller="myControl"> {{url}} </p>
             </div>
         </div>
     </body>
