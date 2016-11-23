@@ -266,7 +266,7 @@ module gameLogic {
         return {board: board, score: currentTurnScore};
     }
 
-    // Helper Funtion: to recursively compute the score of the board
+    // Helper Funtion: to compute the score of the board by Breadth-First-Search
     function computeScoreBFS(board: Board, pos: BoardDelta): ScoreAndChangedBoard {
         let clearedArray: BoardDelta[];
         let score = 0;
