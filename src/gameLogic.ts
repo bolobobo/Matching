@@ -111,7 +111,11 @@ module gameLogic {
      *  ['G', 'B', 'R', 'G', 'B', 'R', 'G', 'R']]
      */
 
-    // Note: TODO: Debby
+    // Note: TODO: Debby 
+    // to judge whether this board has enough space to put 3 prepared box(I mean 9 cells)
+    // not just 9 non-connected empty cells
+    // Suggestion: you can use DFS to do it, 
+    // recursion may cause memory proplem
     function isTie(board: Board): boolean {
         return true;
     }
@@ -152,7 +156,8 @@ module gameLogic {
 
     /**
      * When there is a try to move the prepared cells into the board,
-     * use this function to 
+     * use this function to judge whether it is legal to move or not
+     * if so, use this function to do the move operation.
      */
     export function createMove(
         stateBeforeMove: IState, moves: BoardDelta[], turnIndexBeforeMove: number): IMove {
@@ -193,10 +198,8 @@ module gameLogic {
             turnIndexAfterMove = currentTurnIndex;
             endMatchScores = stateAfterMove.currentScores;
         }
-        return {endMatchScores: endMatchScores, turnIndexAfterMove: turnIndexAfterMove, stateAfterMove: stateAfterMove};
-        
-        
 
+        return {endMatchScores: endMatchScores, turnIndexAfterMove: turnIndexAfterMove, stateAfterMove: stateAfterMove};
     }
 
     // Helper Function: Since there maybe many players, so we need to decide who is the next player
@@ -308,6 +311,9 @@ module gameLogic {
 
     //TODO: JIAQI, not sure, need to generate the 9 cells for the game
     // need to know how to interact with the UI
+
+    //TODO: Add the community function to make two group of people can play the same game
+    // use proposal and majority
 
     // delta in board is useless, just for test====> keep it
     // turnIndexAfterMove = -1 is useless, just for test ====> keep it
