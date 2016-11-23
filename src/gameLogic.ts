@@ -168,7 +168,7 @@ module gameLogic {
                 throw new Error("One can only make a move in an empty position!");
             }
         }
-        // to guarantee the state to be put in has 
+        // to guarantee the state to be put in has legal empty space
 
         if (getWinner(stateBeforeMove) !== '' || isTie(board)) {
             throw new Error("Can only make a move if the game is not over!");
