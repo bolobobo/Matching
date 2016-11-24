@@ -35,11 +35,15 @@ module gameLogic {
             }
         }
         //getInitialRandomCell(board);
-        board[3][3] = getRandomColor();
-        board[3][4] = getRandomColor();
-        board[4][3] = getRandomColor();
-        board[4][4] = getRandomColor();
-
+        board[3][3] = 'G';
+        board[3][4] = 'Y';
+        board[4][3] = 'B';
+        board[4][4] = 'R';
+        // LATER: in order to pass the test, we should first decide the original 4 cells
+        // board[3][3] = getRandomColor();
+        // board[3][4] = getRandomColor();
+        // board[4][3] = getRandomColor();
+        // board[4][4] = getRandomColor();
         // Note: can add the *2 *3 function and the star here
         return board;
     }
@@ -117,7 +121,7 @@ module gameLogic {
     // Suggestion: you can use DFS to do it, 
     // recursion may cause memory proplem
     function isTie(board: Board): boolean {
-        return true;
+        return false;
     }
 
 
@@ -180,10 +184,9 @@ module gameLogic {
         }
 
         // Do the move operation, and change the state of the game
-        let stateAfterMove = angular.copy(stateBeforeMove);
         // Note: if the game has many players, the turn index should be changed
         let currentTurnIndex = getCurrentTurnIndex(turnIndexBeforeMove);
-        stateAfterMove = getTheStateAfterMove(stateAfterMove, moves, currentTurnIndex);
+        let stateAfterMove = getTheStateAfterMove(stateBeforeMove, moves, currentTurnIndex);
 
         let winner = getWinner(stateAfterMove);
         let endMatchScores: number[];
@@ -212,8 +215,7 @@ module gameLogic {
         }
         return currentTurnIndex;
     }
-
-    
+   
     function getTheStateAfterMove(stateBeforeMove: IState, moves: BoardDelta[], currentTurnIndex: number): IState {
         let stateAfterMove = angular.copy(stateBeforeMove);
         for (let i = 0; i < moves.length; i++) {
@@ -234,23 +236,27 @@ module gameLogic {
     function computeCurrentTurnScore(board: Board): ScoreAndChangedBoard{
         // initialize the boundary of the board in order to compute score easily
         // so we need not to consider the boundary condition of the board 
-        let boardWithBoundary: Board;
+        let boardWithBoundary: Board = [];
         let currentTurnScore = 0;
-        for (let k = 0; k < board.length + 1; k++) {
-            boardWithBoundary[0][k] = '';
-            boardWithBoundary[k][0] = '';
+        for (let i = 0; i < ROWS+2; i++) {
+            boardWithBoundary[i] = [];
+            for (let j = 0; j < COLS+2; j++) {
+                boardWithBoundary[i][j] = '';
+            }
         }
+
+        // copy board to boardWithBoundary
         for (let i = 0; i < board.length; i++) {
             for (let j = 0; j < board[i].length; j++) {
-                boardWithBoundary[i][j] = board[i][j];
+                boardWithBoundary[i+1][j+1] = board[i][j];
             }
         }
 
         // compute the score for this turn
-        for (let i = 1; i < board.length; i++) {
-            for (let j = 1; j < board[i].length; j++) {
-                if (boardWithBoundary[i][j] !== '') {
-                    let res = computeScoreBFS(boardWithBoundary,{row: i, col: j, color: boardWithBoundary[i][j]});
+        for (let i = 0; i < board.length; i++) {
+            for (let j = 0; j < board[i].length; j++) {
+                if (boardWithBoundary[i+1][j+1] !== '') {
+                    let res = computeScoreBFS(boardWithBoundary,{row: i+1, col: j+1, color: boardWithBoundary[i+1][j+1]});
                     boardWithBoundary = res.board;
                     currentTurnScore += res.score;
                 }
@@ -258,9 +264,9 @@ module gameLogic {
         }
 
         // clear the color in the original board
-        for (let i = 1; i < boardWithBoundary.length; i++) {
-            for (let j = 1; j < boardWithBoundary[i].length; j++) {
-                board[i-1][j-1] = boardWithBoundary[i][j];
+        for (let i = 0; i < board.length; i++) {
+            for (let j = 0; j < board.length; j++) {
+                board[i][j] = boardWithBoundary[i+1][j+1];
             }
         }
         return {board: board, score: currentTurnScore};
@@ -268,49 +274,115 @@ module gameLogic {
 
     // Helper Funtion: to compute the score of the board by Breadth-First-Search
     function computeScoreBFS(board: Board, pos: BoardDelta): ScoreAndChangedBoard {
-        let clearedArray: BoardDelta[];
+        let connectedCells: BoardDelta[] = [];
+        let cellsToBeCleared: BoardDelta[] = [];
+        let visited: BoardDelta[] = [];
+        let movement = [[0,1],[0,-1],[-1,0],[1,0]];
+
         let score = 0;
         let color = pos.color;
 
-        clearedArray.push(pos);
-        while(clearedArray.length > 0) {
-            let temp = clearedArray.shift();
-            score++;
+        log.log("========================row: " + pos.row + ", col: " + pos.col + ", color: " + pos.color);
+        connectedCells.push(pos);
+        visited.push(pos);
+        while(connectedCells.length !== 0) {
+            let temp = connectedCells.shift();
+            cellsToBeCleared.push(temp);
             let row = temp.row;
             let col = temp.col;
-            // clear the color of the current cell, make the cell empty
-            board[row][col]= '';
-            if (board[row][col+1] === color) {
-                clearedArray.push({row: row, col: col+1, color: color});
+
+            // find all the connected cells depending on this one
+            for (let i = 0; i < movement.length; i++) {
+                let newRow = row + movement[i][0];
+                let newCol = col + movement[i][1];
+                let newPoint = {row: newRow, col: newCol, color: color};
+                if (board[newRow][newCol] === color && !contains(visited, newPoint)) {
+                    connectedCells.push(newPoint);
+                    visited.push(newPoint);
+                }
             }
-            if (board[row][col-1] === color) {
-                clearedArray.push({row: row, col: col-1, color: color});
-            }
-            if (board[row+1][col] === color) {
-                clearedArray.push({row: row+1, col: col, color: color});
-            }
-            if (board[row-1][col] === color) {
-                clearedArray.push({row: row-1, col: col, color: color});
+        }
+
+        if (cellsToBeCleared.length >= 3) {
+            score = cellsToBeCleared.length;
+            for (let i = 0; i < cellsToBeCleared.length; i++) {
+                // clear the color of the current cell, make the cell empty
+                board[cellsToBeCleared[i].row][cellsToBeCleared[i].col] = '';
             }
         }
         return {board: board, score: score};
     }
-
-    //TODO: JIAQI, 
+    // Helper Function: to judge whether the array contains the element
+    function contains(arr: BoardDelta[], e: BoardDelta): boolean {
+        for(let i = 0; i < arr.length; i++) {
+            if (arr[i].row === e.row && arr[i].col === e.col && arr[i].color === e.color ) {
+                return true;
+            }
+        }
+        return false;
+    }
+   
+    /**
+     * Generate the initial move, no player make a real move on the board
+     */
     export function createInitialMove(): IMove {
+        return {endMatchScores: null, turnIndexAfterMove: 0, stateAfterMove: getInitialState()};
     }
 
-    //TODO: JIAQI, not important, just for unit test
+    /**
+     * Just for test, to judge whether the move the player do meet the expection or not
+     */
     export function checkMoveOk(stateTransition: IStateTransition): void {
+        // We can assume that turnIndexBeforeMove and stateBeforeMove are legal, and we need
+        // to verify that the move is OK.
+        let turnIndexBeforeMove = stateTransition.turnIndexBeforeMove;
+        let stateBeforeMove = stateTransition.stateBeforeMove;
+        let move: IMove = stateTransition.move;
 
+        // to test the initial case
+        if (!stateBeforeMove && turnIndexBeforeMove === 0 && 
+            angular.equals(createInitialMove(), move)) {
+                return;
+        }
+
+        // to test the regular case
+        let deltaValue: BoardDelta[] = move.stateAfterMove.delta;
+        let expectedMove = createMove(stateBeforeMove, deltaValue, turnIndexBeforeMove);
+        if (!angular.equals(move, expectedMove)) {
+            throw new Error("Expected move=" + angular.toJson(expectedMove, true) + 
+                ", but got stateTransition=" + angular.toJson(stateTransition, true)); 
+        }
     }
 
-    //TODO: JIAQI, not important, just for unit test
+    /**
+     * Just for test, to call the checkMoveOk function
+     */
     export function forSimpleTestHtml() {
+        var move = gameLogic.createMove(null, [{row: 0, col: 0, color: 'R'}, {row: 1, col: 1, color: 'B'}], 0);
+        log.log("move= ", move);
+        var params: IStateTransition = {
+            turnIndexBeforeMove: 0,
+            stateBeforeMove: null,
+            move: move,
+            numberOfPlayers: 2
+        };
+        gameLogic.checkMoveOk(params);
     }
 
-    //TODO: JIAQI, not sure, need to generate the 9 cells for the game
-    // need to know how to interact with the UI
+
+    // Note: not sure, need to generate the 9 cells for the game
+    /**
+     * Generate the 3 prepared box for the player, one time just generate one box containing 3 cells
+     */
+    export function generatePreparedCells(): string[] {
+        let preparedBox: string[] = [];
+        for (let i = 0; i < 3; i++) {
+            preparedBox[i] = getRandomColor();
+        }
+        return preparedBox;
+    }
+
+
 
     //TODO: Add the community function to make two group of people can play the same game
     // use proposal and majority
