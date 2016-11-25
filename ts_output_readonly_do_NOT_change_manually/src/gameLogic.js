@@ -97,7 +97,77 @@ var gameLogic;
     // not just 9 non-connected empty cells
     // Suggestion: you can use DFS to do it, 
     // recursion may cause memory proplem
+    //
+    // returns true if there is not enough space to put the 3 boxes, false otherwise
     function isTie(board) {
+        var after_board = [];
+        var numEmpty = 0;
+        for (var i = 0; i < board.length; i++) {
+            after_board[i] = [];
+            for (var j = 0; j < board[i].length; j++) {
+                after_board[i][j] = board[i][j];
+                if (board[i][j] === "") {
+                    numEmpty++;
+                }
+            }
+        }
+        //   check if there are at least 9 empty cells on the board 
+        //   regardless of there relative position to each other
+        if (numEmpty < 9) {
+            log.log("numEmply < 9 ");
+            return true; //not enough
+        }
+        if (checkBoardAvailable(after_board, 0)) {
+            return false; //ok for all 3 boxes to be placed on board
+        }
+        return true;
+    }
+    function checkBoardAvailable(board, numPlaced) {
+        if (numPlaced === 3) {
+            log.log("numPlaced === 3");
+            return true;
+        }
+        for (var i = 0; i < board.length; i++) {
+            for (var j = 0; j < board[i].length; j++) {
+                if (checkCanPlace(board, i, j)) {
+                    log.log("can place in " + i + " , " + j);
+                    numPlaced += 1;
+                    if (checkBoardAvailable(board, numPlaced)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+    /**
+     * if row > board.length-2 : only check right
+     * if col > board.length-2 : only check down
+     * if row > board.length-2 && col > board.length-2, return false,
+     *    bracuase at this point the last 4 tiles are already checked
+     */
+    function checkCanPlace(board, row, col) {
+        if (board[row][col] === "") {
+            if (row > board.length - 2 && col > board.length - 2) {
+                return false;
+            }
+            if (row <= board.length - 2) {
+                if (board[row + 1][col] === "" && board[row + 2][col] === "") {
+                    board[row][col] = "X";
+                    board[row + 1][col] = "X";
+                    board[row + 2][col] = "X";
+                    return true;
+                }
+            }
+            if (col <= board.length - 2) {
+                if (board[row][col + 1] === "" && board[row][col + 2] === "") {
+                    board[row][col] = "X";
+                    board[row][col + 1] = "X";
+                    board[row][col + 2] = "X";
+                    return true;
+                }
+            }
+        }
         return false;
     }
     /**
@@ -320,6 +390,32 @@ var gameLogic;
             numberOfPlayers: 2
         };
         gameLogic.checkMoveOk(params);
+        var temp_board = 
+        // [['R', 'G', 'B', '', 'G', 'B', 'R', 'G'],
+        // ['G', 'B', 'R', 'G', '', 'R', 'G', 'R'],
+        // ['B', 'R', '', '', 'R', 'G', 'R', 'G'],
+        // ['R', 'G', 'B', 'R', 'G', '', 'R', 'G'],
+        // ['G', 'B', '', 'G', 'B', 'R', '', 'R'],
+        // ['B', '', 'G', 'B', 'R', 'G', 'R', ''],
+        // ['R', 'G', 'B', 'R', 'G', 'B', 'R', 'G'],
+        // ['', 'B', 'R', 'G', 'B', 'R', 'G', 'R']];
+        [['R', 'G', 'B', 'R', 'G', '', '', ''],
+            ['G', 'B', 'R', 'G', 'B', 'R', 'G', 'B'],
+            ['', 'R', '', '', '', 'G', 'R', 'G'],
+            ['', 'G', 'B', 'R', 'G', 'B', 'R', ''],
+            ['', 'B', '', 'G', 'B', 'R', 'G', ''],
+            ['B', 'R', 'R', 'B', 'R', 'G', 'R', ''],
+            ['R', 'G', '', 'R', 'G', 'B', '', 'G'],
+            ['G', 'B', 'R', 'G', 'B', 'R', 'G', 'R']];
+        // [['','','','','','','',''],
+        //  ['','','','','','','',''],
+        //  ['','','','','','','',''],
+        //  ['','','','','','','',''],
+        //  ['','','','','','','',''],
+        //  ['','','','','','','',''],
+        //  ['','','','','','','',''],
+        //  ['','','','','','','','']];
+        log.log(isTie(temp_board));
     }
     gameLogic.forSimpleTestHtml = forSimpleTestHtml;
     // Note: not sure, need to generate the 9 cells for the game
