@@ -1,4 +1,5 @@
 type Board = string[][];
+type Box = string[][];
 interface BoardDelta {
     row: number;
     col: number;
@@ -10,6 +11,7 @@ interface IState {
     delta: BoardDelta[]; //because we have 3 boxes to put everytime, so the delta is an array, used for check test
     currentScores: number[]; //becase we need to decide which player's score is the highest 
     currentTurn: number; // it's used to decide if the game is in the final turn
+    preparedBox: Box;
 }
 
 // it's a temporary datestruce just used for compute the score, not important
@@ -81,7 +83,8 @@ module gameLogic {
     }
 
     export function getInitialState(): IState {
-        return {board: getInitialBoard(), delta: null, currentScores: getInitialScores(), currentTurn: 0};
+        log.log("this is getInitialState");
+        return {board: getInitialBoard(), delta: [], currentScores: getInitialScores(), currentTurn: 0, preparedBox: generatePreparedBox()};
     }
 
     export function getInitialScores(): number[] {
@@ -201,7 +204,7 @@ module gameLogic {
             turnIndexAfterMove = currentTurnIndex;
             endMatchScores = stateAfterMove.currentScores;
         }
-
+        log.log("this is create move");
         return {endMatchScores: endMatchScores, turnIndexAfterMove: turnIndexAfterMove, stateAfterMove: stateAfterMove};
     }
 
@@ -374,12 +377,16 @@ module gameLogic {
     /**
      * Generate the 3 prepared box for the player, one time just generate one box containing 3 cells
      */
-    export function generatePreparedCells(): string[] {
-        let preparedBox: string[] = [];
+    export function generatePreparedBox(): Box {
+        let box: Box = [];
         for (let i = 0; i < 3; i++) {
-            preparedBox[i] = getRandomColor();
+            box[i] = [];
+            for (let j = 0; j < 3; j++) {
+                box[i][j] = 'G';
+            }  
         }
-        return preparedBox;
+        //log.log("this is generatePreparedBox");
+        return box;
     }
 
 

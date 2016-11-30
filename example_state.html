@@ -26,12 +26,12 @@
         <div id="gameArea">
             <div id="gameMenu" style="position: absolute; top: 0%; width: 100%; height: 10%">
                 <div class="center">
-                <div class="div-inline1" ng-if="!game.isPassAndPlay()" ng-class="{currentPlayer: (game.isCurrentPlayerIndex(0) && game.isMyTurn()) || (game.isCurrentPlayerIndex(1) && !game.isMyTurn())}">{{ game.getName() | translate }}: {{game.state.scores[0]}}</div> 
+                <!--<div class="div-inline1" ng-if="!game.isPassAndPlay()" ng-class="{currentPlayer: (game.isCurrentPlayerIndex(0) && game.isMyTurn()) || (game.isCurrentPlayerIndex(1) && !game.isMyTurn())}">{{ game.getName() | translate }}: {{game.state.scores[0]}}</div> 
                 <div class="div-inline1 currentPlayer" ng-if="game.isPassAndPlay()">{{ 'YOUR_SCORE' | translate }}: {{game.state.scores[0]+game.state.scores[1]}}/{{game.getHighestScore()}}</div>
                 <div class="div-inline2">&nbsp;&nbsp;{{'LEFT_TURNS' | translate}} : {{20-game.state.current_turn}}&nbsp;&nbsp;</div> 
                 <div class="div-inline3" ng-if="!game.isPassAndPlay()" ng-class="{currentPlayer: (game.isCurrentPlayerIndex(1) && game.isMyTurn()) || (game.isCurrentPlayerIndex(0) && !game.isMyTurn())}">{{ game.getOppoName() | translate }}: {{game.state.scores[1]}}</div> 
                 <div class="div-inline3" ng-if="game.isPassAndPlay()" >{{ 'HIGHEST_SCORE' | translate }}: {{game.getHighestScoreGlobally()}}</div>
-                <div style="clear:both"></div>
+                <div style="clear:both"></div>-->
                 </div>
             </div>
             <!--the 8 * 8 game grid-->
