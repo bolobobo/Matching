@@ -59,7 +59,8 @@ var gameLogic;
         }
     }
     function getInitialState() {
-        return { board: getInitialBoard(), delta: null, currentScores: getInitialScores(), currentTurn: 0 };
+        log.log("this is getInitialState");
+        return { board: getInitialBoard(), delta: [], currentScores: getInitialScores(), currentTurn: 0, preparedBox: generatePreparedBox() };
     }
     gameLogic.getInitialState = getInitialState;
     function getInitialScores() {
@@ -238,6 +239,7 @@ var gameLogic;
             turnIndexAfterMove = currentTurnIndex;
             endMatchScores = stateAfterMove.currentScores;
         }
+        log.log("this is create move");
         return { endMatchScores: endMatchScores, turnIndexAfterMove: turnIndexAfterMove, stateAfterMove: stateAfterMove };
     }
     gameLogic.createMove = createMove;
@@ -422,13 +424,17 @@ var gameLogic;
     /**
      * Generate the 3 prepared box for the player, one time just generate one box containing 3 cells
      */
-    function generatePreparedCells() {
-        var preparedBox = [];
+    function generatePreparedBox() {
+        var box = [];
         for (var i = 0; i < 3; i++) {
-            preparedBox[i] = getRandomColor();
+            box[i] = [];
+            for (var j = 0; j < 3; j++) {
+                box[i][j] = 'G';
+            }
         }
-        return preparedBox;
+        //log.log("this is generatePreparedBox");
+        return box;
     }
-    gameLogic.generatePreparedCells = generatePreparedCells;
+    gameLogic.generatePreparedBox = generatePreparedBox;
 })(gameLogic || (gameLogic = {}));
 //# sourceMappingURL=gameLogic.js.map
