@@ -11,9 +11,7 @@ var game;
     game.state = null;
     //export let clickToDragPiece: HTMLImageElement;
     game.blockDeltas = [];
-    // export let blockDeltasRotated = [
-    //     {deltaRow: -1, deltaCol: 0},
-    //     {deltaRow: 1, deltaCol: 0}];
+    // export let blockDeltasRotated: any = [];
     game.rowsNum = 8;
     game.colsNum = 8;
     game.rowsBox = 3;
@@ -22,7 +20,7 @@ var game;
     game.draggingStartedRowCol = null;
     game.draggingPiece = null;
     game.draggingPieceGroup = [];
-    game.boardDragged = [];
+    game.boardDragged = []; // to record which box has been moved to the board
     /**
      * Register for the turnBasedService3.js
      */
@@ -80,7 +78,7 @@ var game;
                 // Drag the piece where the touch is (without snapping to a square).
                 var size = getSquareWidthHeight();
                 // do not need to shrink the size of the cell
-                setDraggingPieceGroupTopLeft({ top: y - size.height / 2, left: x - size.width / 2 }, false);
+                setDraggingPieceGroupTopLeft({ top: y - size.height / 2, left: x - size.width / 2 }, false, game.draggingStartedRowCol.isInBoard);
             }
         }
         else {
@@ -100,29 +98,31 @@ var game;
                     log.info("drag start");
                     game.draggingStartedRowCol = { row: row, col: col, isInBoard: false, indication: -1 };
                     computeBlockDeltas(game.draggingStartedRowCol);
-                    game.draggingPiece = document.getElementById("MyPieceBox" + game.draggingStartedRowCol.row + "x" + game.draggingStartedRowCol.col);
                     createDraggingPieceGroup(game.draggingStartedRowCol);
-                    game.draggingPiece.style['z-index'] = 100;
-                    game.draggingPiece.style['width'] = game.boardArea.clientWidth / 8.0;
-                    game.draggingPiece.style['height'] = game.boardArea.clientWidth / 8.0;
-                    setDraggingPieceGroupTopLeft(getSquareTopLeft(row, col), false);
-                    if (!game.draggingPiece) {
-                        return;
-                    }
-                    if (type === "touchend") {
-                        var from = game.draggingStartedRowCol;
-                        var to = { row: row, col: col };
-                    }
-                    else {
-                        // Drag continue
-                        setDraggingPieceGroupTopLeft(getSquareTopLeft(row, col), false);
-                    }
+                    setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(row, col), false, game.draggingStartedRowCol.isInBoard);
+                }
+                if (!game.draggingPiece) {
+                    return;
+                }
+                if (type === "touchend") {
+                    var from = game.draggingStartedRowCol;
+                    var to = { row: row, col: col };
+                }
+                else {
+                    // Drag continue
+                    setDraggingPieceGroupTopLeft(getSquareTopLeft(row, col), false, game.draggingStartedRowCol.isInBoard);
                 }
             }
             if (type === "touchend" || type === "touchcancel" || type === "touchleave") {
                 // drag ended
                 // return the piece to it's original style (then angular will take care to hide it).
-                setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col), true);
+                if (!game.draggingStartedRowCol.isInBoard) {
+                    setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col), false, game.draggingStartedRowCol.isInBoard);
+                }
+                else {
+                    setDraggingPieceGroupTopLeft(getSquareTopLeft(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col), false, game.draggingStartedRowCol.isInBoard);
+                }
+                // clear the draggingPiece every time when ended
                 game.draggingStartedRowCol = null;
                 game.draggingPiece = null;
                 game.draggingPieceGroup = [];
@@ -214,61 +214,85 @@ var game;
     // Helper Function: to get the HTMLElement of draggingPiece's neighbors
     function createDraggingPieceGroup(draggingStartedRowCol) {
         if (!draggingStartedRowCol.isInBoard) {
+            game.draggingPiece = document.getElementById("MyPieceBox" + draggingStartedRowCol.row + "x" + draggingStartedRowCol.col);
+            game.draggingPiece.style['z-index'] = 100;
+            game.draggingPiece.style['width'] = game.boardArea.clientWidth / 8.0;
+            game.draggingPiece.style['height'] = game.boardArea.clientWidth / 8.0;
             for (var i = 0; i < game.blockDeltas.length; i++) {
                 var newRow = draggingStartedRowCol.row + game.blockDeltas[i].deltaRow;
                 var newCol = draggingStartedRowCol.col + game.blockDeltas[i].deltaCol;
+                log.info("this is piece box " + (i + 1) + " row: " + newRow + " col: " + newCol);
                 var newhtml = document.getElementById("MyPieceBox" + newRow + "x" + newCol);
                 newhtml.style['width'] = game.boardArea.clientWidth / 8.0;
                 newhtml.style['height'] = game.boardArea.clientWidth / 8.0;
+                newhtml.style['z-index'] = 100;
+                game.draggingPieceGroup[i] = newhtml;
+            }
+        }
+        else {
+            game.draggingPiece = document.getElementById("MyPiece" + draggingStartedRowCol.row + "x" + draggingStartedRowCol.col);
+            game.draggingPiece.style['z-index'] = 100;
+            for (var i = 0; i < game.blockDeltas.length; i++) {
+                var newRow = draggingStartedRowCol.row + game.blockDeltas[i].deltaRow;
+                var newCol = draggingStartedRowCol.col + game.blockDeltas[i].deltaCol;
+                log.info("this is piece " + (i + 1) + " row: " + newRow + " col: " + newCol);
+                var newhtml = document.getElementById("MyPiece" + newRow + "x" + newCol);
+                newhtml.style['z-index'] = 100;
                 game.draggingPieceGroup[i] = newhtml;
             }
         }
     }
     // Helper Function: set the top left of the draggingPiece group
-    function setDraggingPieceGroupTopLeft(draggingPieceCurTopLeft, needToShrink) {
-        setDraggingPieceTopLeft(game.draggingPiece, draggingPieceCurTopLeft);
+    function setDraggingPieceGroupTopLeft(draggingPieceCurTopLeft, needToShrink, isInBoard) {
         var size;
+        var originalSize;
+        var originalTopLeft;
         if (needToShrink) {
             size = getSquareWidthHeight_Box();
         }
         else {
             size = getSquareWidthHeight();
         }
-        for (var i = 0; i < game.blockDeltas.length; i++) {
-            var top_1 = draggingPieceCurTopLeft.top + game.blockDeltas[i].deltaRow * size.height;
-            var left = draggingPieceCurTopLeft.left + game.blockDeltas[i].deltaRow * size.width;
-            setDraggingPieceTopLeft(game.draggingPieceGroup[i], { top: top_1, left: left });
-        }
-    }
-    function setDraggingPieceTopLeft(piece, topLeft) {
-        var originalSize;
-        if (game.draggingStartedRowCol.isInBoard) {
-            originalSize = getSquareTopLeft(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col);
+        if (isInBoard) {
+            setDraggingPieceTopLeft(game.draggingPiece, draggingPieceCurTopLeft, getSquareTopLeft_Box(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col));
+            originalTopLeft = getSquareTopLeft(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col);
+            originalSize = getSquareWidthHeight();
         }
         else {
-            originalSize = getSquareTopLeft_Box(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col);
+            setDraggingPieceTopLeft(game.draggingPiece, draggingPieceCurTopLeft, getSquareTopLeft_Box(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col));
+            originalTopLeft = getSquareTopLeft_Box(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col);
+            originalSize = getSquareWidthHeight_Box();
         }
-        piece.style.left = (topLeft.left - originalSize.left) + "px";
-        piece.style.top = (topLeft.top - originalSize.top) + "px";
+        for (var i = 0; i < game.blockDeltas.length; i++) {
+            var originalTop = originalTopLeft.top + game.blockDeltas[i].deltaRow * originalSize.height;
+            var originalLeft = originalTopLeft.left + game.blockDeltas[i].deltaCol * originalSize.width;
+            var top_1 = draggingPieceCurTopLeft.top + game.blockDeltas[i].deltaRow * size.height;
+            var left = draggingPieceCurTopLeft.left + game.blockDeltas[i].deltaCol * size.width;
+            setDraggingPieceTopLeft(game.draggingPieceGroup[i], { top: top_1, left: left }, { top: originalTop, left: originalLeft });
+        }
+    }
+    function setDraggingPieceTopLeft(piece, topLeft, originalTopLeft) {
+        piece.style.left = topLeft.left - originalTopLeft.left;
+        piece.style.top = topLeft.top - originalTopLeft.top;
     }
     function getSquareTopLeft(row, col) {
         var size = getSquareWidthHeight();
         return { top: row * size.height, left: col * size.width };
     }
     function getSquareTopLeft_Box(row, col) {
-        var size = getSquareWidthHeight();
-        return { top: game.boardArea.clientHeight * 0.91, left: (row * 3 + col) * size.width };
+        var size = getSquareWidthHeight_Box();
+        return { top: game.boardArea.clientHeight * 0.91, left: row * game.boardArea.clientWidth * 0.35 + col * size.width };
     }
     function getSquareWidthHeight() {
         return {
-            width: game.boardArea.clientWidth / game.colsNum,
-            height: game.boardArea.clientWidth / game.rowsNum
+            width: game.boardArea.clientWidth / game.rowsNum,
+            height: game.boardArea.clientWidth / game.colsNum
         };
     }
     function getSquareWidthHeight_Box() {
         return {
-            width: game.boardArea.clientWidth / game.colsBox,
-            height: game.boardArea.clientWidth / game.colsBox
+            width: game.boardArea.clientWidth * 0.9 / game.colsBox,
+            height: game.boardArea.clientWidth * 0.9 / game.colsBox
         };
     }
     // Helper Function: to judge whether the neighbor cell is in the boardArea

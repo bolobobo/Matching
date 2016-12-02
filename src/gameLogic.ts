@@ -9,7 +9,7 @@ interface BoardDelta {
 interface IState {
     board: Board;
     delta: BoardDelta[]; //because we have 3 boxes to put everytime, so the delta is an array, used for check test
-    currentScores: number[]; //becase we need to decide which player's score is the highest 
+    currentScores: number[]; //becase we need to decide which player's score is the highest
     currentTurn: number; // it's used to decide if the game is in the final turn
     preparedBox: Box;
 }
@@ -96,7 +96,7 @@ module gameLogic {
     }
 
     /**
-     * Return true if the game ended in a tie because there are no three related 
+     * Return true if the game ended in a tie because there are no three related
      * horizontal and vertical empty cells to put in the prepare cells;
      * E.g., isTie returns true for the following board:
      * [['R', 'G', 'B', 'R', 'G', 'B', 'R', 'G'],
@@ -118,15 +118,89 @@ module gameLogic {
      *  ['G', 'B', 'R', 'G', 'B', 'R', 'G', 'R']]
      */
 
-    // Note: TODO: Debby 
+    // Note: TODO: Debby
     // to judge whether this board has enough space to put 3 prepared box(I mean 9 cells)
     // not just 9 non-connected empty cells
-    // Suggestion: you can use DFS to do it, 
+    // Suggestion: you can use DFS to do it,
     // recursion may cause memory proplem
+    //
+    // returns true if there is not enough space to put the 3 boxes, false otherwise
     function isTie(board: Board): boolean {
+        let after_board: Board = [];
+        let numEmpty = 0;
+
+        for (let i = 0; i < board.length; i++) {
+            after_board[i] = [];
+            for (let j = 0; j < board[i].length; j++) {  
+                after_board[i][j] = board[i][j];                                            
+                if (board[i][j] ===""){
+                    numEmpty++
+                }
+            }
+        }
+        //   check if there are at least 9 empty cells on the board
+        //   regardless of there relative position to each other
+        if (numEmpty < 9) {
+            log.log("numEmply < 9 ")
+            return true; //not enough
+        }
+        if(checkBoardAvailable(after_board, 0)){
+            return false; //ok for all 3 boxes to be placed on board
+        }
+
+        return true;
+    }
+
+    function checkBoardAvailable(board: Board, numPlaced: number):boolean{       
+        if (numPlaced === 3){
+            log.log("numPlaced === 3")
+            return true
+        }
+        for(let i = 0; i < board.length; i++){
+            for(let j=0; j < board[i].length; j++){
+                if(checkCanPlace(board, i, j)){
+                    log.log("can place in "+ i + " , " + j)
+                    numPlaced+=1
+                    if(checkBoardAvailable(board, numPlaced)){
+                        return true;
+                    }
+                }
+            }
+        }
         return false;
     }
 
+/**
+* if row > board.length-2 : only check right
+* if col > board.length-2 : only check down
+* if row > board.length-2 && col > board.length-2, return false,
+*    bracuase at this point the last 4 tiles are already checked
+*/
+
+    function checkCanPlace(board:Board, row:number, col:number): boolean{
+        if (board[row][col]===""){            
+            if(row > board.length-2 && col > board.length-2){          
+                return false;
+            }
+            if(row <= board.length-2){
+                if(board[row+1][col]==="" && board[row+2][col]===""){
+                    board[row][col] = "X";
+                    board[row+1][col] = "X";
+                    board[row+2][col] = "X";
+                    return true
+                }
+            }
+            if(col <= board.length-2){
+                if(board[row][col+1]==="" && board[row][col+2]===""){
+                    board[row][col] = "X";                    
+                    board[row][col+1] = "X";
+                    board[row][col+2] = "X";
+                    return true
+                }
+            }
+        }
+        return false;
+    }
 
     /**
      * Return the winner (either 0, 1 ,2...) or '' if there is no winner (because they have the same score);
@@ -166,6 +240,7 @@ module gameLogic {
      * use this function to judge whether it is legal to move or not
      * if so, use this function to do the move operation.
      */
+
     export function createMove(
         stateBeforeMove: IState, moves: BoardDelta[], turnIndexBeforeMove: number): IMove {
         // if it's the state before initialization, just initialize the state
@@ -218,7 +293,7 @@ module gameLogic {
         }
         return currentTurnIndex;
     }
-   
+
     function getTheStateAfterMove(stateBeforeMove: IState, moves: BoardDelta[], currentTurnIndex: number): IState {
         let stateAfterMove = angular.copy(stateBeforeMove);
         for (let i = 0; i < moves.length; i++) {
@@ -238,7 +313,7 @@ module gameLogic {
     // Note: if it doesn't work, can change the length of board to 8
     function computeCurrentTurnScore(board: Board): ScoreAndChangedBoard{
         // initialize the boundary of the board in order to compute score easily
-        // so we need not to consider the boundary condition of the board 
+        // so we need not to consider the boundary condition of the board
         let boardWithBoundary: Board = [];
         let currentTurnScore = 0;
         for (let i = 0; i < ROWS+2; i++) {
@@ -324,7 +399,7 @@ module gameLogic {
         }
         return false;
     }
-   
+
     /**
      * Generate the initial move, no player make a real move on the board
      */
@@ -343,7 +418,7 @@ module gameLogic {
         let move: IMove = stateTransition.move;
 
         // to test the initial case
-        if (!stateBeforeMove && turnIndexBeforeMove === 0 && 
+        if (!stateBeforeMove && turnIndexBeforeMove === 0 &&
             angular.equals(createInitialMove(), move)) {
                 return;
         }
@@ -352,8 +427,8 @@ module gameLogic {
         let deltaValue: BoardDelta[] = move.stateAfterMove.delta;
         let expectedMove = createMove(stateBeforeMove, deltaValue, turnIndexBeforeMove);
         if (!angular.equals(move, expectedMove)) {
-            throw new Error("Expected move=" + angular.toJson(expectedMove, true) + 
-                ", but got stateTransition=" + angular.toJson(stateTransition, true)); 
+            throw new Error("Expected move=" + angular.toJson(expectedMove, true) +
+                ", but got stateTransition=" + angular.toJson(stateTransition, true));
         }
     }
 
@@ -370,6 +445,34 @@ module gameLogic {
             numberOfPlayers: 2
         };
         gameLogic.checkMoveOk(params);
+        let temp_board: Board =
+        // [['R', 'G', 'B', '', 'G', 'B', 'R', 'G'],
+        // ['G', 'B', 'R', 'G', '', 'R', 'G', 'R'],
+        // ['B', 'R', '', '', 'R', 'G', 'R', 'G'],
+        // ['R', 'G', 'B', 'R', 'G', '', 'R', 'G'],
+        // ['G', 'B', '', 'G', 'B', 'R', '', 'R'],
+        // ['B', '', 'G', 'B', 'R', 'G', 'R', ''],
+        // ['R', 'G', 'B', 'R', 'G', 'B', 'R', 'G'],
+        // ['', 'B', 'R', 'G', 'B', 'R', 'G', 'R']];
+
+      [['R', 'G', 'B', 'R', 'G', '', '', ''],
+       ['G', 'B', 'R', 'G', 'B', 'R', 'G', 'B'],
+       ['', 'R', '', '', '', 'G', 'R', 'G'],
+       ['', 'G', 'B', 'R', 'G', 'B', 'R', ''],
+       ['', 'B', '', 'G', 'B', 'R', 'G', ''],
+       ['B', 'R', 'R', 'B', 'R', 'G', 'R', ''],
+       ['R', 'G', '', 'R', 'G', 'B', '', 'G'],
+       ['G', 'B', 'R', 'G', 'B', 'R', 'G', 'R']];
+        // [['','','','','','','',''],
+        //  ['','','','','','','',''],
+        //  ['','','','','','','',''],
+        //  ['','','','','','','',''],
+        //  ['','','','','','','',''],
+        //  ['','','','','','','',''],
+        //  ['','','','','','','',''],
+        //  ['','','','','','','','']];
+
+        log.log(isTie(temp_board));
     }
 
 
@@ -399,6 +502,6 @@ module gameLogic {
     // the whole IMove datastructure is just for test =====> keep it
     // endMatchScores, don't know the use ====>????
     // angular.copy, if it's deep copy, need to know ===???
-    // the parameter in typescript function is passed by value or inference, need to know 
+    // the parameter in typescript function is passed by value or inference, need to know
     // ===> ???, we need to test the score function very carefully
 }

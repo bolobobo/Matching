@@ -10,6 +10,10 @@ interface TopLeft {
     top: number;
     left: number;
 }
+
+interface Size {
+    
+}
 module game {
     // Global variables are cleared when getting updateUI.
     // I export all variables to make it easy to debug in the browser by
@@ -27,9 +31,7 @@ module game {
     export let gamePrepare: HTMLElement;
     //export let clickToDragPiece: HTMLImageElement;
     export let blockDeltas: any = [];
-    // export let blockDeltasRotated = [
-    //     {deltaRow: -1, deltaCol: 0},
-    //     {deltaRow: 1, deltaCol: 0}];
+    // export let blockDeltasRotated: any = [];
     export let rowsNum: number = 8;
     export let colsNum: number = 8;
     export let rowsBox: number = 3;
@@ -38,8 +40,8 @@ module game {
     export let draggingStartedRowCol: any = null;
     export let draggingPiece: any = null;
     export let draggingPieceGroup: HTMLElement[] = [];
-    export let boardDragged: number[][] = [];
-    export let indication: number;
+    export let boardDragged: number[][] = []; // to record which box has been moved to the board
+    export let indication: number; // to indicate the cells in the same box when they are moved to board
 
     /**
      * Register for the turnBasedService3.js
@@ -101,7 +103,7 @@ module game {
                 // Drag the piece where the touch is (without snapping to a square).
                 let size = getSquareWidthHeight();
                 // do not need to shrink the size of the cell
-                setDraggingPieceGroupTopLeft({top: y - size.height / 2, left: x - size.width / 2}, false);
+                setDraggingPieceGroupTopLeft({top: y - size.height / 2, left: x - size.width / 2}, false, draggingStartedRowCol.isInBoard);
             }
         } else {
             // the first touch in the board but not in the prepared area
@@ -130,32 +132,34 @@ module game {
                     log.info("drag start");
                     draggingStartedRowCol = {row: row, col: col, isInBoard: false, indication: -1};
                     computeBlockDeltas(draggingStartedRowCol);
-                    draggingPiece = document.getElementById("MyPieceBox" + draggingStartedRowCol.row + "x" + draggingStartedRowCol.col);
                     createDraggingPieceGroup(draggingStartedRowCol);
-                    draggingPiece.style['z-index'] = 100;
-                    draggingPiece.style['width'] = boardArea.clientWidth/8.0;
-                    draggingPiece.style['height'] = boardArea.clientWidth/8.0;
-                    setDraggingPieceGroupTopLeft(getSquareTopLeft(row, col), false);
-
-                    if (!draggingPiece) {
-                        return;
-                    }
-
-                    if (type === "touchend") {
-                        var from = draggingStartedRowCol;
-                        var to = {row: row, col: col};
-                        //dragDone(from, to);
-                    } else {
-                        // Drag continue
-                        setDraggingPieceGroupTopLeft(getSquareTopLeft(row, col), false);
-                    } 
+                    setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(row, col), false, draggingStartedRowCol.isInBoard);
                 }
+                if (!draggingPiece) {
+                    return;
+                }
+
+                if (type === "touchend") {
+                    let from = draggingStartedRowCol;
+                    let to = {row: row, col: col};
+                    //dragDone(from, to);
+                } else {
+                    // Drag continue
+                    setDraggingPieceGroupTopLeft(getSquareTopLeft(row, col), false, draggingStartedRowCol.isInBoard);
+                } 
             }
 
             if (type === "touchend" || type === "touchcancel" || type === "touchleave") {
                 // drag ended
                 // return the piece to it's original style (then angular will take care to hide it).
-                setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(draggingStartedRowCol.row, draggingStartedRowCol.col), true);
+                if (!draggingStartedRowCol.isInBoard) {
+                    setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(draggingStartedRowCol.row, draggingStartedRowCol.col), 
+                    false, draggingStartedRowCol.isInBoard);
+                } else {
+                    setDraggingPieceGroupTopLeft(getSquareTopLeft(draggingStartedRowCol.row, draggingStartedRowCol.col), 
+                    false, draggingStartedRowCol.isInBoard);
+                }
+                // clear the draggingPiece every time when ended
                 draggingStartedRowCol = null;
                 draggingPiece = null;
                 draggingPieceGroup = [];
@@ -241,65 +245,91 @@ module game {
 
     // Helper Function: to get the HTMLElement of draggingPiece's neighbors
     function createDraggingPieceGroup(draggingStartedRowCol: any) {
+
         if (!draggingStartedRowCol.isInBoard) {
+            draggingPiece = document.getElementById("MyPieceBox" + draggingStartedRowCol.row + "x" + draggingStartedRowCol.col);
+            draggingPiece.style['z-index'] = 100;
+            draggingPiece.style['width'] = boardArea.clientWidth/8.0;
+            draggingPiece.style['height'] = boardArea.clientWidth/ 8.0;
             for (let i = 0; i < blockDeltas.length; i++) {
                 let newRow = draggingStartedRowCol.row + blockDeltas[i].deltaRow;
                 let newCol = draggingStartedRowCol.col + blockDeltas[i].deltaCol;
+                log.info("this is piece box " + (i+1) + " row: " + newRow + " col: " + newCol);
                 let newhtml: any = document.getElementById("MyPieceBox" + newRow + "x" + newCol);
                 newhtml.style['width'] = boardArea.clientWidth/8.0;
                 newhtml.style['height'] = boardArea.clientWidth/8.0;
+                newhtml.style['z-index'] = 100;
+                draggingPieceGroup[i] = newhtml;
+            }
+        } else {
+            draggingPiece = document.getElementById("MyPiece" + draggingStartedRowCol.row + "x" + draggingStartedRowCol.col);
+            draggingPiece.style['z-index'] = 100;
+            for (let i = 0; i < blockDeltas.length; i++) {
+                let newRow = draggingStartedRowCol.row + blockDeltas[i].deltaRow;
+                let newCol = draggingStartedRowCol.col + blockDeltas[i].deltaCol;
+                log.info("this is piece " + (i+1) + " row: " + newRow + " col: " + newCol);
+                let newhtml: any = document.getElementById("MyPiece" + newRow + "x" + newCol);
+                newhtml.style['z-index'] = 100;
                 draggingPieceGroup[i] = newhtml;
             }
         }
     }
 
     // Helper Function: set the top left of the draggingPiece group
-    function setDraggingPieceGroupTopLeft(draggingPieceCurTopLeft: TopLeft, needToShrink: boolean) {
-        setDraggingPieceTopLeft(draggingPiece, draggingPieceCurTopLeft);
+    function setDraggingPieceGroupTopLeft(draggingPieceCurTopLeft: TopLeft, needToShrink: boolean, isInBoard: boolean) {
+        
         let size: any;
+        let originalSize: any;
+        let originalTopLeft: TopLeft;
         if (needToShrink) {
             size = getSquareWidthHeight_Box();
         } else {
             size = getSquareWidthHeight();
         }
-        for(let i = 0; i < blockDeltas.length; i++) {
-            let top = draggingPieceCurTopLeft.top + blockDeltas[i].deltaRow * size.height;
-            let left = draggingPieceCurTopLeft.left + blockDeltas[i].deltaRow * size.width;
-            setDraggingPieceTopLeft(draggingPieceGroup[i], {top: top, left: left});
-        }
-    }
 
-    function setDraggingPieceTopLeft(piece: any, topLeft: TopLeft) {
-        let originalSize: any;
-        if (draggingStartedRowCol.isInBoard) {
-            originalSize = getSquareTopLeft(draggingStartedRowCol.row, draggingStartedRowCol.col);
+        if (isInBoard) {
+            setDraggingPieceTopLeft(draggingPiece,  draggingPieceCurTopLeft, getSquareTopLeft_Box(draggingStartedRowCol.row, draggingStartedRowCol.col));
+            originalTopLeft = getSquareTopLeft(draggingStartedRowCol.row, draggingStartedRowCol.col);
+            originalSize = getSquareWidthHeight();
         } else {
-            originalSize = getSquareTopLeft_Box(draggingStartedRowCol.row, draggingStartedRowCol.col);
+            setDraggingPieceTopLeft(draggingPiece,  draggingPieceCurTopLeft, getSquareTopLeft_Box(draggingStartedRowCol.row, draggingStartedRowCol.col));
+            originalTopLeft = getSquareTopLeft_Box(draggingStartedRowCol.row, draggingStartedRowCol.col);
+            originalSize = getSquareWidthHeight_Box();
         }
-        piece.style.left = (topLeft.left - originalSize.left) + "px";
-        piece.style.top = (topLeft.top - originalSize.top) + "px";
+        for(let i = 0; i < blockDeltas.length; i++) {
+            let originalTop = originalTopLeft.top + blockDeltas[i].deltaRow * originalSize.height;
+            let originalLeft = originalTopLeft.left + blockDeltas[i].deltaCol * originalSize.width;
+            let top = draggingPieceCurTopLeft.top + blockDeltas[i].deltaRow * size.height;
+            let left = draggingPieceCurTopLeft.left + blockDeltas[i].deltaCol * size.width;
+            setDraggingPieceTopLeft(draggingPieceGroup[i], {top: top, left: left}, {top: originalTop, left: originalLeft});
+        }
     }
 
-    function getSquareTopLeft(row: number, col: number) {
+    function setDraggingPieceTopLeft(piece: any, topLeft: TopLeft, originalTopLeft: TopLeft) {
+        piece.style.left = topLeft.left - originalTopLeft.left;
+        piece.style.top = topLeft.top - originalTopLeft.top;
+    }
+
+    function getSquareTopLeft(row: number, col: number): TopLeft {
         let size = getSquareWidthHeight();
         return {top: row * size.height, left: col * size.width};
     }
-    function getSquareTopLeft_Box(row: number, col: number) {
-        let size = getSquareWidthHeight();
-        return {top: boardArea.clientHeight * 0.91, left: (row * 3 + col) * size.width};
+    function getSquareTopLeft_Box(row: number, col: number): TopLeft {
+        let size = getSquareWidthHeight_Box();
+        return {top: boardArea.clientHeight * 0.91, left: row * boardArea.clientWidth * 0.35 + col * size.width};
     }
 
-    function getSquareWidthHeight() {
+    function getSquareWidthHeight(): any {
         return {
-          width: boardArea.clientWidth / colsNum,
-          height: boardArea.clientWidth / rowsNum
+          width: boardArea.clientWidth / rowsNum,
+          height: boardArea.clientWidth / colsNum
         };
     }
 
-    function getSquareWidthHeight_Box() {
+    function getSquareWidthHeight_Box(): any {
         return {
-          width: boardArea.clientWidth / colsBox,
-          height: boardArea.clientWidth / colsBox
+          width: boardArea.clientWidth * 0.9 / colsBox,
+          height: boardArea.clientWidth * 0.9 / colsBox
         };
     }
 
