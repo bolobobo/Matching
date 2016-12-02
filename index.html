@@ -26,7 +26,7 @@
 </head>
 
 <body ng-cloak>
-    <div id="gameArea">
+    <div id="gameArea" style="z-index: 60">
         <div id="gameMenu" style="position: absolute; top: 0%; width: 100%; height: 10%">
             <div class="center">
                 <!--<div class="div-inline1" ng-if="!game.isPassAndPlay()" ng-class="{currentPlayer: (game.isCurrentPlayerIndex(0) && game.isMyTurn()) || (game.isCurrentPlayerIndex(1) && !game.isMyTurn())}">{{ game.getName() | translate }}: {{game.state.scores[0]}}</div> 
@@ -35,11 +35,12 @@
                 <div class="div-inline3" ng-if="!game.isPassAndPlay()" ng-class="{currentPlayer: (game.isCurrentPlayerIndex(1) && game.isMyTurn()) || (game.isCurrentPlayerIndex(0) && !game.isMyTurn())}">{{ game.getOppoName() | translate }}: {{game.state.scores[1]}}</div> 
                 <div class="div-inline3" ng-if="game.isPassAndPlay()" >{{ 'HIGHEST_SCORE' | translate }}: {{game.getHighestScoreGlobally()}}</div>
                 <div style="clear:both"></div>-->
+
             </div>
         </div>
             <!--the 8 * 8 game grid-->
-        <div id="boardArea" style="z-index: 60">
-            <div style="position: absolute; top: 10%; width: 90%; height: 72%; margin-left: 5%">
+        <div id="boardArea" style="position: absolute; top: 10%; width: 90%; height: 80%; margin-left: 5%" >
+            <div style="position: absolute; top: 0; width: 100%; height: 90%;">
                 <div ng-repeat="row in [0, 1, 2, 3, 4, 5, 6, 7]" 
                 style="position:absolute; top:{{row * 12.5}}%; left:0; width:100%; height:12.5%;">
                     <div ng-repeat="col in [0, 1, 2, 3, 4, 5, 6, 7]" 
@@ -85,48 +86,20 @@
             </div>
 
             <!--the 3 prepare boxes to be put into the game board-->
-            <div id="gamePrepare" style="position: absolute; top: 83%; width: 90%; height:8%; margin-left: 5%">
+            <div id="gamePrepare" style="position: absolute; top: 91%; width: 100%; height:9%;">
                 <div ng-repeat="rowbox in [0, 1, 2]"
-                Style="position: absolute; left: {{rowbox * 33.5}}%; width: 33%; height: 100%"
-                id="MyPiece{{rowbox}}">
+                style="position: absolute; left: {{rowbox * 35}}%; width: 30%; height: 100%">
                     <div ng-repeat="colbox in [0, 1, 2]"
-                    Style="position: absolute; left: {{colbox * 33.3}}%; width: 33.3%; height: 100%"
+                    Style="position: absolute; left: {{colbox * 33.3333}}%; width: 33.3333%; height: 100%"
                     class = "gameBox";
                     ng-click="game.cellClicked(rowbox, colbox, color)">
-                            <div style="width:100%; height: 100%"
+                        <svg width="100%"  height="100%"
+                            style="position:absolute;"
                             ng-class="{slowlyAppear: game.shouldSlowlyAppear(rowbox, colbox)}"
                             ng-if="game.shouldShowImage_Box(rowbox, colbox)"
-                            >
-                            <!--the box is red-->
-                                <svg ng-if="game.isPieceR_Box(rowbox, colbox)"
-                                    id="{{'e2e_test_pieceR_' + rowbox + 'x' + colbox}}"
-                                    width="100%" height="100%">
-                                    <rect rx="10%" ry="10%" width="100%" height="100%" style="fill:rgb(255, 128, 170); stroke-width:1.5px; stroke:grey"/>
-                                    <!--<circle cx="50%" cy="50%" r="27%" stroke="blue" stroke-width="5%" fill="white" />-->
-                                </svg>
-                                <!--the box is green-->
-                                <svg ng-if="game.isPieceG_Box(rowbox, colbox)"
-                                    id="{{'e2e_test_pieceG_' + rowbox + 'x' + colbox}}"
-                                    width="100%" height="100%">
-                                    <rect rx="10%" ry="10%" width="100%" height="100%" style="fill:rgb(71, 209, 71); stroke-width:1.5px; stroke:grey"/>   
-                                </svg>
-                                    <!--the box is blue-->
-                                <svg ng-if="game.isPieceB_Box(rowbox, colbox)"
-                                    id="{{'e2e_test_pieceB_' + rowbox + 'x' + colbox}}"
-                                    width="100%" height="100%">
-                                    <rect rx="10%" ry="10%" width="100%" height="100%" style="fill:rgb(51, 204, 255); stroke-width:1.5px; stroke:grey"/>   
-                                </svg>
-                                    <!--the box is yellow-->
-                                <svg ng-if="game.isPieceY_Box(rowbox, colbox)"
-                                    id="{{'e2e_test_pieceY_' + rowbox + 'x' + colbox}}"
-                                    width="100%" height="100%">
-                                    <rect rx="10%" ry="10%" width="100%" height="100%" style="fill:rgb(246, 246, 85); stroke-width:1.5px; stroke:grey"/>   
-                                </svg> 
-                                    <!--the box is a star-->
-                                <img ng-if="game.isPieceStar_Box(rowbox, colbox)"
-                                id="{{'e2e_test_pieceStar_' + rowbox + 'x' + colbox}}"
-                                width="100%" height="100%">                              
-                        </div>
+                            id="MyPieceBox{{rowbox}}x{{colbox}}">
+                            <rect rx="10%" ry="10%" width="100%" height="100%" stroke="grey" stroke-width="0.5px" fill="{{game.getPreparedBoxColor(rowbox, colbox)}}" />                            
+                        </svg>
                     </div>                    
                 </div>
             </div>

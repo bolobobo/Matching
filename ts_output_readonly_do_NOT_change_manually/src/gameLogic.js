@@ -93,10 +93,10 @@ var gameLogic;
      *  ['R', 'G', 'B', 'R', 'G', 'B', ' ', 'G'],
      *  ['G', 'B', 'R', 'G', 'B', 'R', 'G', 'R']]
      */
-    // Note: TODO: Debby 
+    // Note: TODO: Debby
     // to judge whether this board has enough space to put 3 prepared box(I mean 9 cells)
     // not just 9 non-connected empty cells
-    // Suggestion: you can use DFS to do it, 
+    // Suggestion: you can use DFS to do it,
     // recursion may cause memory proplem
     //
     // returns true if there is not enough space to put the 3 boxes, false otherwise
@@ -112,7 +112,7 @@ var gameLogic;
                 }
             }
         }
-        //   check if there are at least 9 empty cells on the board 
+        //   check if there are at least 9 empty cells on the board
         //   regardless of there relative position to each other
         if (numEmpty < 9) {
             log.log("numEmply < 9 ");
@@ -142,11 +142,11 @@ var gameLogic;
         return false;
     }
     /**
-     * if row > board.length-2 : only check right
-     * if col > board.length-2 : only check down
-     * if row > board.length-2 && col > board.length-2, return false,
-     *    bracuase at this point the last 4 tiles are already checked
-     */
+    * if row > board.length-2 : only check right
+    * if col > board.length-2 : only check down
+    * if row > board.length-2 && col > board.length-2, return false,
+    *    bracuase at this point the last 4 tiles are already checked
+    */
     function checkCanPlace(board, row, col) {
         if (board[row][col] === "") {
             if (row > board.length - 2 && col > board.length - 2) {
@@ -271,7 +271,7 @@ var gameLogic;
     // Note: if it doesn't work, can change the length of board to 8
     function computeCurrentTurnScore(board) {
         // initialize the boundary of the board in order to compute score easily
-        // so we need not to consider the boundary condition of the board 
+        // so we need not to consider the boundary condition of the board
         var boardWithBoundary = [];
         var currentTurnScore = 0;
         for (var i = 0; i < gameLogic.ROWS + 2; i++) {

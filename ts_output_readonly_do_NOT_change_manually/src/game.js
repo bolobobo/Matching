@@ -10,18 +10,17 @@ var game;
     game.animationEndedTimeout = null;
     game.state = null;
     //export let clickToDragPiece: HTMLImageElement;
-    game.blockDelas = [
-        { deltaRow: 0, deltaCol: -1 },
-        { deltaRow: 0, deltaCol: 1 }];
-    game.blockDelasRoted = [
-        { deltaRow: -1, deltaCol: 0 },
-        { deltaRow: 1, deltaCol: 0 }];
+    game.blockDeltas = [];
+    // export let blockDeltasRotated: any = [];
     game.rowsNum = 8;
     game.colsNum = 8;
     game.rowsBox = 3;
     game.colsBox = 9;
     game.nextZIndex = 61;
     game.draggingStartedRowCol = null;
+    game.draggingPiece = null;
+    game.draggingPieceGroup = [];
+    game.boardDragged = []; // to record which box has been moved to the board
     /**
      * Register for the turnBasedService3.js
      */
@@ -42,6 +41,8 @@ var game;
         game.gameArea = document.getElementById("gameArea");
         game.boardArea = document.getElementById("boardArea");
         game.gamePrepare = document.getElementById("gamePrepare");
+        getInitialBoardDragged();
+        game.indication = 0;
         //clickToDragPiece = document.getElementById("clickToDragPiece");
     }
     game.init = init;
@@ -63,59 +64,241 @@ var game;
         // Center point in gameArea
         var x = clientX - game.boardArea.offsetLeft - game.gameArea.offsetLeft;
         var y = clientY - game.boardArea.offsetTop - game.gameArea.offsetTop;
-        // log.info("x is " + x);
-        // log.info("y is " + y);
-        // log.info("board offset left: " + boardArea.offsetLeft + "Top: " + boardArea.offsetTop);
-        // log.info("game offset left: " + gameArea.offsetLeft + "Top: " + gameArea.offsetTop);
         //TODO: CLEAR Drag
         // Is the touch in the prepared box area?
-        if (x < 0 || y < 0 || x >= game.boardArea.clientWidth ||
-            y < game.boardArea.clientWidth + game.boardArea.clientWidth * 0.0375 || y >= game.boardArea.clientWidth * 1.125) {
+        if (x < 0 || y < 0 || x >= game.boardArea.clientWidth || y >= game.boardArea.clientHeight) {
             //TODO: if the drag is outside the legal board, it should return to the original position
-            return;
-        }
-        else {
-            // Inside prepared box area. Let's find the containing square's row and col
-            var col = Math.floor(game.colsBox * x / game.boardArea.clientWidth) % game.rowsBox;
-            var row = Math.floor(game.rowsBox * x / game.boardArea.clientWidth);
-            log.info("the box row is: " + row + " col is : " + col);
-            if (type === "touchstart" && !game.draggingStartedRowCol) {
-                // drag started
-                log.info("drag start");
-                game.draggingStartedRowCol = { row: row, col: col };
-                game.draggingPiece = document.getElementById("MyPiece" + game.draggingStartedRowCol.row);
-                game.draggingPiece.style['z-index'] = ++game.nextZIndex;
-                game.draggingPiece.style.background = "gray";
-                game.draggingPiece.style.width = game.boardArea.clientWidth / 3.0;
-                game.draggingPiece.style.height = game.boardArea.clientWidth / 9.0;
+            log.info("this is the outside preparedBox and board");
+            if (!game.draggingPiece) {
+                // The start touch is in a valid area, ignore it
+                return;
+            }
+            else {
+                // the finger is in the piece, but the touch is in a invalid area 
+                // Drag the piece where the touch is (without snapping to a square).
+                var size = getSquareWidthHeight();
+                // do not need to shrink the size of the cell
+                setDraggingPieceGroupTopLeft({ top: y - size.height / 2, left: x - size.width / 2 }, false, game.draggingStartedRowCol.isInBoard);
             }
         }
-        //   if (!draggingPiece) {
-        //     return;
-        //   }
-        //   if (type === "touchend") {
-        //     var from = draggingStartedRowCol;
-        //     var to = {row: row, col: col};
-        //     dragDone(from, to);
-        //   } else {
-        //     // Drag continue
-        //     setDraggingPieceTopLeft(getSquareTopLeft(row, col));
-        //     draggingLines.style.display = "inline";
-        //     var centerXY = getSquareCenterXY(row, col);
-        //     verticalDraggingLine.setAttribute("x1", centerXY.x);
-        //     verticalDraggingLine.setAttribute("x2", centerXY.x);
-        //     horizontalDraggingLine.setAttribute("y1", centerXY.y);
-        //     horizontalDraggingLine.setAttribute("y2", centerXY.y);
-        //   }
-        // // Is the entire block inside the board?
-        // if (!isInsideBoard(row, col, blockDelas)) {
-        //   return;
-        // }
+        else {
+            // the first touch in the board but not in the prepared area
+            if (!game.draggingPiece && y < game.boardArea.clientWidth + game.boardArea.clientWidth * 0.0375) {
+                return;
+            }
+            if (game.draggingPiece && y < game.boardArea.clientWidth + game.boardArea.clientWidth * 0.0375) {
+            }
+            else {
+                // Inside prepared box area. Let's find the containing square's row and col
+                var col = Math.floor(game.colsBox * x / game.boardArea.clientWidth) % game.rowsBox;
+                var row = Math.floor(game.rowsBox * x / game.boardArea.clientWidth);
+                log.info("the prepared box row is: " + row + " col is : " + col);
+                if (type === "touchstart" && !game.draggingStartedRowCol) {
+                    // drag started
+                    log.info("drag start");
+                    game.draggingStartedRowCol = { row: row, col: col, isInBoard: false, indication: -1 };
+                    computeBlockDeltas(game.draggingStartedRowCol);
+                    createDraggingPieceGroup(game.draggingStartedRowCol);
+                    setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(row, col), false, game.draggingStartedRowCol.isInBoard);
+                }
+                if (!game.draggingPiece) {
+                    return;
+                }
+                if (type === "touchend") {
+                    var from = game.draggingStartedRowCol;
+                    var to = { row: row, col: col };
+                }
+                else {
+                    // Drag continue
+                    setDraggingPieceGroupTopLeft(getSquareTopLeft(row, col), false, game.draggingStartedRowCol.isInBoard);
+                }
+            }
+            if (type === "touchend" || type === "touchcancel" || type === "touchleave") {
+                // drag ended
+                // return the piece to it's original style (then angular will take care to hide it).
+                if (!game.draggingStartedRowCol.isInBoard) {
+                    setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col), false, game.draggingStartedRowCol.isInBoard);
+                }
+                else {
+                    setDraggingPieceGroupTopLeft(getSquareTopLeft(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col), false, game.draggingStartedRowCol.isInBoard);
+                }
+                // clear the draggingPiece every time when ended
+                game.draggingStartedRowCol = null;
+                game.draggingPiece = null;
+                game.draggingPieceGroup = [];
+                game.blockDeltas = [];
+            }
+        }
+    }
+    // Helper Function: to find the neighbor cells related to the finger-pointed cell
+    function computeBlockDeltas(draggingStartedRowCol) {
+        if (!draggingStartedRowCol.isInBoard) {
+            if (draggingStartedRowCol.col === 0) {
+                game.blockDeltas = [
+                    { deltaRow: 0, deltaCol: 1 },
+                    { deltaRow: 0, deltaCol: 2 }];
+            }
+            else if (draggingStartedRowCol.col === 1) {
+                game.blockDeltas = [
+                    { deltaRow: 0, deltaCol: -1 },
+                    { deltaRow: 0, deltaCol: 1 }];
+            }
+            else if (draggingStartedRowCol.col === 2) {
+                game.blockDeltas = [
+                    { deltaRow: 0, deltaCol: -2 },
+                    { deltaRow: 0, deltaCol: -1 }];
+            }
+        }
+        else {
+            computeBlockDeltasInBoard(draggingStartedRowCol);
+        }
+    }
+    // TODO: this function is too silly
+    function computeBlockDeltasInBoard(draggingStartedRowCol) {
+        var row = draggingStartedRowCol.row + 2;
+        var col = draggingStartedRowCol.col + 2;
+        var value = draggingStartedRowCol.indication;
+        if (game.boardDragged[row - 1][col] === value) {
+            // up 
+            if (game.boardDragged[row - 2][col] === value) {
+                game.blockDeltas = [
+                    { deltaRow: -1, deltaCol: 0 },
+                    { deltaRow: -2, deltaCol: 0 }];
+            }
+            else if (game.boardDragged[row + 1][col] === value) {
+                game.blockDeltas = [
+                    { deltaRow: -1, deltaCol: 0 },
+                    { deltaRow: 1, deltaCol: 0 }];
+            }
+        }
+        else if (game.boardDragged[row + 1][col] === value) {
+            // down
+            if (game.boardDragged[row + 2][col] === value) {
+                game.blockDeltas = [
+                    { deltaRow: 1, deltaCol: 0 },
+                    { deltaRow: 2, deltaCol: 0 }];
+            }
+            else if (game.boardDragged[row - 1][col] === value) {
+                game.blockDeltas = [
+                    { deltaRow: -1, deltaCol: 0 },
+                    { deltaRow: 1, deltaCol: 0 }];
+            }
+        }
+        else if (game.boardDragged[row][col - 1] === value) {
+            // left
+            if (game.boardDragged[row][col - 2] === value) {
+                game.blockDeltas = [
+                    { deltaRow: 0, deltaCol: -1 },
+                    { deltaRow: 0, deltaCol: -2 }];
+            }
+            else if (game.boardDragged[row][col + 1] === value) {
+                game.blockDeltas = [
+                    { deltaRow: 0, deltaCol: -1 },
+                    { deltaRow: 0, deltaCol: 1 }];
+            }
+        }
+        else if (game.boardDragged[row][col + 1] == value) {
+            //right
+            if (game.boardDragged[row][col + 2] === value) {
+                game.blockDeltas = [
+                    { deltaRow: 0, deltaCol: 1 },
+                    { deltaRow: 0, deltaCol: 2 }];
+            }
+            else if (game.boardDragged[row][col - 1] === value) {
+                game.blockDeltas = [
+                    { deltaRow: 0, deltaCol: -1 },
+                    { deltaRow: 0, deltaCol: 1 }];
+            }
+        }
+    }
+    // Helper Function: to get the HTMLElement of draggingPiece's neighbors
+    function createDraggingPieceGroup(draggingStartedRowCol) {
+        if (!draggingStartedRowCol.isInBoard) {
+            game.draggingPiece = document.getElementById("MyPieceBox" + draggingStartedRowCol.row + "x" + draggingStartedRowCol.col);
+            game.draggingPiece.style['z-index'] = 100;
+            game.draggingPiece.style['width'] = game.boardArea.clientWidth / 8.0;
+            game.draggingPiece.style['height'] = game.boardArea.clientWidth / 8.0;
+            for (var i = 0; i < game.blockDeltas.length; i++) {
+                var newRow = draggingStartedRowCol.row + game.blockDeltas[i].deltaRow;
+                var newCol = draggingStartedRowCol.col + game.blockDeltas[i].deltaCol;
+                log.info("this is piece box " + (i + 1) + " row: " + newRow + " col: " + newCol);
+                var newhtml = document.getElementById("MyPieceBox" + newRow + "x" + newCol);
+                newhtml.style['width'] = game.boardArea.clientWidth / 8.0;
+                newhtml.style['height'] = game.boardArea.clientWidth / 8.0;
+                newhtml.style['z-index'] = 100;
+                game.draggingPieceGroup[i] = newhtml;
+            }
+        }
+        else {
+            game.draggingPiece = document.getElementById("MyPiece" + draggingStartedRowCol.row + "x" + draggingStartedRowCol.col);
+            game.draggingPiece.style['z-index'] = 100;
+            for (var i = 0; i < game.blockDeltas.length; i++) {
+                var newRow = draggingStartedRowCol.row + game.blockDeltas[i].deltaRow;
+                var newCol = draggingStartedRowCol.col + game.blockDeltas[i].deltaCol;
+                log.info("this is piece " + (i + 1) + " row: " + newRow + " col: " + newCol);
+                var newhtml = document.getElementById("MyPiece" + newRow + "x" + newCol);
+                newhtml.style['z-index'] = 100;
+                game.draggingPieceGroup[i] = newhtml;
+            }
+        }
+    }
+    // Helper Function: set the top left of the draggingPiece group
+    function setDraggingPieceGroupTopLeft(draggingPieceCurTopLeft, needToShrink, isInBoard) {
+        var size;
+        var originalSize;
+        var originalTopLeft;
+        if (needToShrink) {
+            size = getSquareWidthHeight_Box();
+        }
+        else {
+            size = getSquareWidthHeight();
+        }
+        if (isInBoard) {
+            setDraggingPieceTopLeft(game.draggingPiece, draggingPieceCurTopLeft, getSquareTopLeft_Box(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col));
+            originalTopLeft = getSquareTopLeft(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col);
+            originalSize = getSquareWidthHeight();
+        }
+        else {
+            setDraggingPieceTopLeft(game.draggingPiece, draggingPieceCurTopLeft, getSquareTopLeft_Box(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col));
+            originalTopLeft = getSquareTopLeft_Box(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col);
+            originalSize = getSquareWidthHeight_Box();
+        }
+        for (var i = 0; i < game.blockDeltas.length; i++) {
+            var originalTop = originalTopLeft.top + game.blockDeltas[i].deltaRow * originalSize.height;
+            var originalLeft = originalTopLeft.left + game.blockDeltas[i].deltaCol * originalSize.width;
+            var top_1 = draggingPieceCurTopLeft.top + game.blockDeltas[i].deltaRow * size.height;
+            var left = draggingPieceCurTopLeft.left + game.blockDeltas[i].deltaCol * size.width;
+            setDraggingPieceTopLeft(game.draggingPieceGroup[i], { top: top_1, left: left }, { top: originalTop, left: originalLeft });
+        }
+    }
+    function setDraggingPieceTopLeft(piece, topLeft, originalTopLeft) {
+        piece.style.left = topLeft.left - originalTopLeft.left;
+        piece.style.top = topLeft.top - originalTopLeft.top;
+    }
+    function getSquareTopLeft(row, col) {
+        var size = getSquareWidthHeight();
+        return { top: row * size.height, left: col * size.width };
+    }
+    function getSquareTopLeft_Box(row, col) {
+        var size = getSquareWidthHeight_Box();
+        return { top: game.boardArea.clientHeight * 0.91, left: row * game.boardArea.clientWidth * 0.35 + col * size.width };
+    }
+    function getSquareWidthHeight() {
+        return {
+            width: game.boardArea.clientWidth / game.rowsNum,
+            height: game.boardArea.clientWidth / game.colsNum
+        };
+    }
+    function getSquareWidthHeight_Box() {
+        return {
+            width: game.boardArea.clientWidth * 0.9 / game.colsBox,
+            height: game.boardArea.clientWidth * 0.9 / game.colsBox
+        };
     }
     // Helper Function: to judge whether the neighbor cell is in the boardArea
-    function isInsideBoard(row, col, blockDelas) {
-        for (var i = 0; i < blockDelas.length; i++) {
-            var delta = blockDelas[i];
+    function isInsideBoard(row, col, blockDeltas) {
+        for (var i = 0; i < blockDeltas.length; i++) {
+            var delta = blockDeltas[i];
             var r_neighbor = row + delta.deltaRow;
             var c_neighbor = col + delta.deltaCol;
             if (r_neighbor < 0 || r_neighbor >= game.rowsNum || c_neighbor < 0 || c_neighbor >= game.colsNum) {
@@ -124,23 +307,22 @@ var game;
         }
         return true;
     }
-    function getSquareWidthHeight() {
-        return {
-            width: game.gameArea.clientWidth / game.colsNum,
-            height: game.gameArea.clientHeight / game.rowsNum
-        };
-    }
-    // function getSquareTopLeft(row, col) {
-    //     var size = getSquareWidthHeight();
-    //     return {top: row * size.height, left: col * size.width}
-    // }
-    //   function getSquareCenterXY(row, col) {
+    // function getSquareCenterXY(row: number, col: number) {
     //     var size = getSquareWidthHeight();
     //     return {
-    //       x: col * size.width + size.width / 2,
-    //       y: row * size.height + size.height / 2
+    //         x: col * size.width + size.width / 2,
+    //         y: row * size.height + size.height / 2
     //     };
-    //   }
+    // }
+    function getInitialBoardDragged() {
+        // extend the board to initialize the boundary
+        for (var i = 0; i < gameLogic.ROWS + 2; i++) {
+            game.boardDragged[i] = [];
+            for (var j = 0; j < gameLogic.COLS + 2; j++) {
+                game.boardDragged[i][j] = 0;
+            }
+        }
+    }
     //------------------------------------------------------------------------------------------------
     /**
      * Define the different translation of the rule of the game
@@ -278,6 +460,26 @@ var game;
         return game.state.preparedBox[row][col] === 'Y';
     }
     game.isPieceY_Box = isPieceY_Box;
+    // export function shouldSlowlyAppear(row: number, col: number): boolean {
+    //     return state.delta &&
+    //         state.delta.row === row && state.delta.col === col;
+    // }
+    function getPreparedBoxColor(row, col) {
+        var color = game.state.preparedBox[row][col];
+        if (color === 'R') {
+            return "rgb(255, 128, 170)";
+        }
+        else if (color === 'G') {
+            return "rgb(71, 209, 71)";
+        }
+        else if (color === 'B') {
+            return "rgb(51, 204, 255)";
+        }
+        else if (color === 'Y') {
+            return "rgb(246, 246, 85)";
+        }
+    }
+    game.getPreparedBoxColor = getPreparedBoxColor;
 })(game || (game = {}));
 angular.module('myApp', ['gameServices'])
     .run(function () {
@@ -285,4 +487,5 @@ angular.module('myApp', ['gameServices'])
     game.init();
 });
 // what is updateUI, what is playmode
+// use enum to notate the right, left, top and down
 //# sourceMappingURL=game.js.map
