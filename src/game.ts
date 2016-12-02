@@ -5,10 +5,6 @@ interface SupportedLanguages {
 interface Translations {
     [index: string]: SupportedLanguages;
 }
-interface DraggingPiece {
-    draggingPos: TopLeft;
-    blockDeltas: any;
-}
 
 interface TopLeft {
     top: number;
@@ -30,12 +26,10 @@ module game {
     export let boardArea: HTMLElement;
     export let gamePrepare: HTMLElement;
     //export let clickToDragPiece: HTMLImageElement;
-    export let blockDeltas = [
-        {deltaRow: 0, deltaCol: -1},
-        {deltaRow: 0, deltaCol: 1}];
-    export let blockDeltasRotated = [
-        {deltaRow: -1, deltaCol: 0},
-        {deltaRow: 1, deltaCol: 0}];
+    export let blockDeltas: any = [];
+    // export let blockDeltasRotated = [
+    //     {deltaRow: -1, deltaCol: 0},
+    //     {deltaRow: 1, deltaCol: 0}];
     export let rowsNum: number = 8;
     export let colsNum: number = 8;
     export let rowsBox: number = 3;
@@ -43,8 +37,9 @@ module game {
     export let nextZIndex: number = 61;
     export let draggingStartedRowCol: any = null;
     export let draggingPiece: any = null;
-    export let draggingPieceNeighbor: any = null;
-    export let draggingPieceGroup: any = null;
+    export let draggingPieceGroup: HTMLElement[] = [];
+    export let boardDragged: number[][] = [];
+    export let indication: number;
 
     /**
      * Register for the turnBasedService3.js
@@ -68,6 +63,8 @@ module game {
         gameArea = document.getElementById("gameArea");
         boardArea = document.getElementById("boardArea");
         gamePrepare = document.getElementById("gamePrepare");
+        getInitialBoardDragged();
+        indication = 0;
 
         //clickToDragPiece = document.getElementById("clickToDragPiece");
     }  
@@ -103,72 +100,207 @@ module game {
                 // the finger is in the piece, but the touch is in a invalid area 
                 // Drag the piece where the touch is (without snapping to a square).
                 let size = getSquareWidthHeight();
-                setDraggingPieceGroupTopLeft({draggingPos: {top: y - size.height / 2, left: x - size.width / 2}, blockDeltas: blockDeltas});
+                // do not need to shrink the size of the cell
+                setDraggingPieceGroupTopLeft({top: y - size.height / 2, left: x - size.width / 2}, false);
             }
         } else {
-            if (!draggingPiece && y < boardArea.clientWidth + boardArea.clientWidth*0.0375 ) {
+            // the first touch in the board but not in the prepared area
+            if (!draggingPiece && y < boardArea.clientWidth + boardArea.clientWidth*0.0375) {
                 return;
             }
-            // Inside prepared box area. Let's find the containing square's row and col
-            let col = Math.floor(colsBox * x / boardArea.clientWidth) % rowsBox;
-            let row = Math.floor(rowsBox * x / boardArea.clientWidth);
-            log.info("the box row is: " + row + " col is : " + col);
-            if (type === "touchstart" && !draggingStartedRowCol) {
-                // drag started
-                log.info("drag start");
-                draggingStartedRowCol = {row: row, col: col, isInBoard: false};
-                blockDeltas = computeBlockDeltas(draggingStartedRowCol);
-                draggingPiece = document.getElementById("MyPiece" + draggingStartedRowCol.row + "x" + draggingStartedRowCol.col);
-                draggingPieceGroup = createDraggingPieceGroup(draggingStartedRowCol, blockDeltas);
-                draggingPiece.style['z-index'] = 100;
-                //draggingPiece.style.background= "pink";
-                draggingPiece.style['width'] = boardArea.clientWidth/8.0;
-                draggingPiece.style['height'] = boardArea.clientWidth/8.0;
+            if (draggingPiece && y < boardArea.clientWidth + boardArea.clientWidth*0.0375) {
+                // 1: the drag in the board part
 
-            }
+                // drag start
 
-            if (!draggingPiece) {
-                return;
-            }
+                // drag continue
 
-            if (type === "touchend") {
-                var from = draggingStartedRowCol;
-                var to = {row: row, col: col};
-                //dragDone(from, to);
+
+                // drag ended
+
+
             } else {
-                // Drag continue
-                setDraggingPieceTopLeft(getSquareTopLeft(row, col));
-            } 
-        }   
+                // Inside prepared box area. Let's find the containing square's row and col
+                let col = Math.floor(colsBox * x / boardArea.clientWidth) % rowsBox;
+                let row = Math.floor(rowsBox * x / boardArea.clientWidth);
+                log.info("the prepared box row is: " + row + " col is : " + col);
+                
+                if (type === "touchstart" && !draggingStartedRowCol) {
+                    // drag started
+                    log.info("drag start");
+                    draggingStartedRowCol = {row: row, col: col, isInBoard: false, indication: -1};
+                    computeBlockDeltas(draggingStartedRowCol);
+                    draggingPiece = document.getElementById("MyPieceBox" + draggingStartedRowCol.row + "x" + draggingStartedRowCol.col);
+                    createDraggingPieceGroup(draggingStartedRowCol);
+                    draggingPiece.style['z-index'] = 100;
+                    draggingPiece.style['width'] = boardArea.clientWidth/8.0;
+                    draggingPiece.style['height'] = boardArea.clientWidth/8.0;
+                    setDraggingPieceGroupTopLeft(getSquareTopLeft(row, col), false);
 
-        //
-        if (type === "touchend" || type === "touchcancel" || type === "touchleave") {
-            // drag ended
-            // return the piece to it's original style (then angular will take care to hide it).
-            setDraggingPieceTopLeft(getSquareTopLeft(draggingStartedRowCol.row, draggingStartedRowCol.col));
-            draggingStartedRowCol = null;
-            draggingPiece = null;
-        }
+                    if (!draggingPiece) {
+                        return;
+                    }
+
+                    if (type === "touchend") {
+                        var from = draggingStartedRowCol;
+                        var to = {row: row, col: col};
+                        //dragDone(from, to);
+                    } else {
+                        // Drag continue
+                        setDraggingPieceGroupTopLeft(getSquareTopLeft(row, col), false);
+                    } 
+                }
+            }
+
+            if (type === "touchend" || type === "touchcancel" || type === "touchleave") {
+                // drag ended
+                // return the piece to it's original style (then angular will take care to hide it).
+                setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(draggingStartedRowCol.row, draggingStartedRowCol.col), true);
+                draggingStartedRowCol = null;
+                draggingPiece = null;
+                draggingPieceGroup = [];
+                blockDeltas = [];
+            }
+        }   
     }
 
     // Helper Function: to find the neighbor cells related to the finger-pointed cell
     function computeBlockDeltas(draggingStartedRowCol: any): any {
-        
+        if (!draggingStartedRowCol.isInBoard) {
+            if (draggingStartedRowCol.col === 0) {
+                blockDeltas = [
+                {deltaRow: 0, deltaCol: 1},
+                {deltaRow: 0, deltaCol: 2}];
+            } else if (draggingStartedRowCol.col === 1) {
+                blockDeltas = [
+                {deltaRow: 0, deltaCol: -1},
+                {deltaRow: 0, deltaCol: 1}];
+            } else if (draggingStartedRowCol.col === 2) {
+                blockDeltas = [
+                {deltaRow: 0, deltaCol: -2},
+                {deltaRow: 0, deltaCol: -1}];
+            }
+        } else {
+            computeBlockDeltasInBoard(draggingStartedRowCol);
+        }
     }
     
+    // TODO: this function is too silly
+    function computeBlockDeltasInBoard(draggingStartedRowCol: any) {
+        let row = draggingStartedRowCol.row + 2;
+        let col = draggingStartedRowCol.col + 2;
+        let value = draggingStartedRowCol.indication;
+
+        if (boardDragged[row-1][col] === value) {
+            // up 
+            if (boardDragged[row-2][col] === value) {
+                blockDeltas = [
+                {deltaRow: -1, deltaCol: 0},
+                {deltaRow: -2, deltaCol: 0}];
+            } else if (boardDragged[row+1][col] === value) {
+                blockDeltas = [
+                {deltaRow: -1, deltaCol: 0},
+                {deltaRow: 1, deltaCol: 0}];
+            }
+        } else if (boardDragged[row+1][col] === value) {
+            // down
+            if (boardDragged[row+2][col] === value) {
+                blockDeltas = [
+                {deltaRow: 1, deltaCol: 0},
+                {deltaRow: 2, deltaCol: 0}];               
+            } else if (boardDragged[row-1][col] === value) {
+                blockDeltas = [
+                {deltaRow: -1, deltaCol: 0},
+                {deltaRow: 1, deltaCol: 0}];                  
+            }
+        } else if (boardDragged[row][col-1] === value) {
+            // left
+            if (boardDragged[row][col-2] === value) {
+                blockDeltas = [
+                {deltaRow: 0, deltaCol: -1},
+                {deltaRow: 0, deltaCol: -2}];    
+            } else if (boardDragged[row][col+1] === value) {
+                blockDeltas = [
+                {deltaRow: 0, deltaCol: -1},
+                {deltaRow: 0, deltaCol: 1}];  
+            }
+        } else if (boardDragged[row][col+1] == value) {
+            //right
+            if (boardDragged[row][col+2] === value) {
+                blockDeltas = [
+                {deltaRow: 0, deltaCol: 1},
+                {deltaRow: 0, deltaCol: 2}];  
+            } else if (boardDragged[row][col-1] === value) {
+                blockDeltas = [
+                {deltaRow: 0, deltaCol: -1},
+                {deltaRow: 0, deltaCol: 1}];  
+            }
+        }   
+    }
+
+
     // Helper Function: to get the HTMLElement of draggingPiece's neighbors
-    function createDraggingPieceGroup(draggingStartedRowCol: any, blockDeltas: any) {
-        
+    function createDraggingPieceGroup(draggingStartedRowCol: any) {
+        if (!draggingStartedRowCol.isInBoard) {
+            for (let i = 0; i < blockDeltas.length; i++) {
+                let newRow = draggingStartedRowCol.row + blockDeltas[i].deltaRow;
+                let newCol = draggingStartedRowCol.col + blockDeltas[i].deltaCol;
+                let newhtml: any = document.getElementById("MyPieceBox" + newRow + "x" + newCol);
+                newhtml.style['width'] = boardArea.clientWidth/8.0;
+                newhtml.style['height'] = boardArea.clientWidth/8.0;
+                draggingPieceGroup[i] = newhtml;
+            }
+        }
     }
 
     // Helper Function: set the top left of the draggingPiece group
-    function setDraggingPieceGroupTopLeft(draggingPiece: DraggingPiece) {
-        let draggingPos = draggingPiece.draggingPos;
-        setDraggingPieceTopLeft(draggingPos);
-        for(let i = 0; i < blockDeltas.length; i++) {
-            setDraggingPiece
+    function setDraggingPieceGroupTopLeft(draggingPieceCurTopLeft: TopLeft, needToShrink: boolean) {
+        setDraggingPieceTopLeft(draggingPiece, draggingPieceCurTopLeft);
+        let size: any;
+        if (needToShrink) {
+            size = getSquareWidthHeight_Box();
+        } else {
+            size = getSquareWidthHeight();
         }
-        
+        for(let i = 0; i < blockDeltas.length; i++) {
+            let top = draggingPieceCurTopLeft.top + blockDeltas[i].deltaRow * size.height;
+            let left = draggingPieceCurTopLeft.left + blockDeltas[i].deltaRow * size.width;
+            setDraggingPieceTopLeft(draggingPieceGroup[i], {top: top, left: left});
+        }
+    }
+
+    function setDraggingPieceTopLeft(piece: any, topLeft: TopLeft) {
+        let originalSize: any;
+        if (draggingStartedRowCol.isInBoard) {
+            originalSize = getSquareTopLeft(draggingStartedRowCol.row, draggingStartedRowCol.col);
+        } else {
+            originalSize = getSquareTopLeft_Box(draggingStartedRowCol.row, draggingStartedRowCol.col);
+        }
+        piece.style.left = (topLeft.left - originalSize.left) + "px";
+        piece.style.top = (topLeft.top - originalSize.top) + "px";
+    }
+
+    function getSquareTopLeft(row: number, col: number) {
+        let size = getSquareWidthHeight();
+        return {top: row * size.height, left: col * size.width};
+    }
+    function getSquareTopLeft_Box(row: number, col: number) {
+        let size = getSquareWidthHeight();
+        return {top: boardArea.clientHeight * 0.91, left: (row * 3 + col) * size.width};
+    }
+
+    function getSquareWidthHeight() {
+        return {
+          width: boardArea.clientWidth / colsNum,
+          height: boardArea.clientWidth / rowsNum
+        };
+    }
+
+    function getSquareWidthHeight_Box() {
+        return {
+          width: boardArea.clientWidth / colsBox,
+          height: boardArea.clientWidth / colsBox
+        };
     }
 
     // Helper Function: to judge whether the neighbor cell is in the boardArea
@@ -185,24 +317,6 @@ module game {
     }
 
 
-    
-    function setDraggingPieceTopLeft(topLeft: any) {
-        var originalSize = getSquareTopLeft(draggingStartedRowCol.row, draggingStartedRowCol.col);
-        draggingPiece.style.left = (topLeft.left - originalSize.left) + "px";
-        draggingPiece.style.top = (topLeft.top - originalSize.top) + "px";
-    }
-
-    function getSquareTopLeft(row: number, col: number) {
-        var size = getSquareWidthHeight();
-        return {top: row * size.height, left: col * size.width}
-    }
-
-    function getSquareWidthHeight() {
-        return {
-          width: boardArea.clientWidth / colsNum,
-          height: boardArea.clientWidth / rowsNum
-        };
-    }
 
     // function getSquareCenterXY(row: number, col: number) {
     //     var size = getSquareWidthHeight();
@@ -212,7 +326,15 @@ module game {
     //     };
     // }
 
-
+    function getInitialBoardDragged() {
+        // extend the board to initialize the boundary
+        for (let i = 0; i < gameLogic.ROWS + 2; i++) {
+            boardDragged[i] = [];
+            for (let j = 0; j < gameLogic.COLS + 2; j++) {
+                boardDragged[i][j] = 0;
+            }
+        }
+    }
 
 
 
@@ -398,3 +520,5 @@ angular.module('myApp', ['gameServices'])
 
 
 // what is updateUI, what is playmode
+
+// use enum to notate the right, left, top and down
