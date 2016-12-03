@@ -5,11 +5,11 @@ var game;
     // I export all variables to make it easy to debug in the browser by
     // simply typing in the console, e.g.,
     // game.currentUpdateUI
+    // basic configuration
     game.currentUpdateUI = null;
     game.didMakeMove = false; // You can only make one move per updateUI
     game.animationEndedTimeout = null;
     game.state = null;
-    //export let clickToDragPiece: HTMLImageElement;
     game.blockDeltas = [];
     // export let blockDeltasRotated: any = [];
     game.rowsNum = 8;
@@ -21,8 +21,9 @@ var game;
     game.draggingPiece = null;
     game.draggingPieceGroup = [];
     game.boardDragged = []; // to record which box has been moved to the board
+    game.needToShrink = false; // At begginning, do not need to Shrink
     /**
-     * Register for the turnBasedService3.js
+     * Register for the turnBasedService3.js file
      */
     function init() {
         //registerServiceWorker();
@@ -37,17 +38,21 @@ var game;
             gotMessageFromPlatform: null,
         });
         //initialize the drag-n-drop varibles
-        dragAndDropService.addDragListener("boardArea", handleDragEvent);
         game.gameArea = document.getElementById("gameArea");
         game.boardArea = document.getElementById("boardArea");
         game.gamePrepare = document.getElementById("gamePrepare");
-        getInitialBoardDragged();
+        getInitialBoardDragged(); // initialize the boardDragged
+        getSquareWidthHeight();
+        getSquareWidthHeight_Box();
         game.indication = 0;
-        //clickToDragPiece = document.getElementById("clickToDragPiece");
+        dragAndDropService.addDragListener("boardArea", handleDragEvent);
     }
     game.init = init;
     /**
-     * Drag the prepared box to the game board:
+     * Drag the piece from prepared area to the game board area
+     * OR from board area to board area
+     * OR from prepared area to prepared area
+     * OR from board area to prepared area
      * Suppose I'm dragging a blokus block that looks like:
      * XYX
      * --------
@@ -64,42 +69,39 @@ var game;
         // Center point in gameArea
         var x = clientX - game.boardArea.offsetLeft - game.gameArea.offsetLeft;
         var y = clientY - game.boardArea.offsetTop - game.gameArea.offsetTop;
-        //TODO: CLEAR Drag
-        // Is the touch in the prepared box area?
+        // Is the touch in the whole board area?
         if (x < 0 || y < 0 || x >= game.boardArea.clientWidth || y >= game.boardArea.clientHeight) {
-            //TODO: if the drag is outside the legal board, it should return to the original position
-            log.info("this is the outside preparedBox and board");
             if (!game.draggingPiece) {
                 // The start touch is in a valid area, ignore it
                 return;
             }
             else {
-                // the finger is in the piece, but the touch is in a invalid area 
-                // Drag the piece where the touch is (without snapping to a square).
-                var size = getSquareWidthHeight();
+                // The finger is in the piece, but the touch is in a invalid area 
+                // Drag the piece where the touch is (without snapping to a square). 
+                // Just to show the drag position
                 // do not need to shrink the size of the cell
-                setDraggingPieceGroupTopLeft({ top: y - size.height / 2, left: x - size.width / 2 }, false, game.draggingStartedRowCol.isInBoard);
+                setDraggingPieceGroupTopLeft({ top: y - game.boardSquareSize.height / 2, left: x - game.boardSquareSize.width / 2 }, game.needToShrink, game.draggingStartedRowCol.isInBoard);
             }
         }
         else {
             // the first touch in the board but not in the prepared area
             if (!game.draggingPiece && y < game.boardArea.clientWidth + game.boardArea.clientWidth * 0.0375) {
+                // TODO: START FROM BOARD TO BOARD OR FROM BOARD TO PREPARED
                 return;
             }
             if (game.draggingPiece && y < game.boardArea.clientWidth + game.boardArea.clientWidth * 0.0375) {
             }
             else {
-                // Inside prepared box area. Let's find the containing square's row and col
+                // Position: Inside prepared box area. Let's find the containing square's row and col
                 var col = Math.floor(game.colsBox * x / game.boardArea.clientWidth) % game.rowsBox;
                 var row = Math.floor(game.rowsBox * x / game.boardArea.clientWidth);
-                log.info("the prepared box row is: " + row + " col is : " + col);
                 if (type === "touchstart" && !game.draggingStartedRowCol) {
                     // drag started
-                    log.info("drag start");
-                    game.draggingStartedRowCol = { row: row, col: col, isInBoard: false, indication: -1 };
-                    computeBlockDeltas(game.draggingStartedRowCol);
+                    log.info("drag start AT PREPARED.");
+                    game.draggingStartedRowCol = { row: row, col: col, isInBoard: false, isVertical: false, indication: -1 };
+                    computeBlockDeltas(game.draggingStartedRowCol, game.draggingStartedRowCol.isInBoard);
                     createDraggingPieceGroup(game.draggingStartedRowCol);
-                    setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(row, col), false, game.draggingStartedRowCol.isInBoard);
+                    setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(row, col), game.needToShrink, game.draggingStartedRowCol.isInBoard);
                 }
                 if (!game.draggingPiece) {
                     return;
@@ -110,29 +112,34 @@ var game;
                 }
                 else {
                     // Drag continue
-                    setDraggingPieceGroupTopLeft(getSquareTopLeft(row, col), false, game.draggingStartedRowCol.isInBoard);
+                    setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(row, col), false, game.draggingStartedRowCol.isInBoard);
                 }
             }
-            if (type === "touchend" || type === "touchcancel" || type === "touchleave") {
-                // drag ended
-                // return the piece to it's original style (then angular will take care to hide it).
-                if (!game.draggingStartedRowCol.isInBoard) {
-                    setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col), false, game.draggingStartedRowCol.isInBoard);
-                }
-                else {
-                    setDraggingPieceGroupTopLeft(getSquareTopLeft(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col), false, game.draggingStartedRowCol.isInBoard);
-                }
-                // clear the draggingPiece every time when ended
-                game.draggingStartedRowCol = null;
-                game.draggingPiece = null;
-                game.draggingPieceGroup = [];
-                game.blockDeltas = [];
+        }
+        // If the drag is outside the legal board, it should return to the original position
+        if (type === "touchend" || type === "touchcancel" || type === "touchleave") {
+            // drag ended
+            // return the piece to it's original style (then angular will take care to hide it).
+            if (!game.draggingStartedRowCol.isInBoard) {
+                game.needToShrink = true;
+                setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col), game.needToShrink, game.draggingStartedRowCol.isInBoard);
+                setDraggingPieceGroupStyle();
             }
+            else {
+                game.needToShrink = false;
+                setDraggingPieceGroupTopLeft(getSquareTopLeft(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col), game.needToShrink, game.draggingStartedRowCol.isInBoard);
+            }
+            // clear the draggingPiece every time when ended
+            game.draggingStartedRowCol = null;
+            game.draggingPiece = null;
+            game.draggingPieceGroup = [];
+            game.blockDeltas = [];
+            game.needToShrink = false;
         }
     }
     // Helper Function: to find the neighbor cells related to the finger-pointed cell
-    function computeBlockDeltas(draggingStartedRowCol) {
-        if (!draggingStartedRowCol.isInBoard) {
+    function computeBlockDeltas(draggingStartedRowCol, isInBoard) {
+        if (!isInBoard) {
             if (draggingStartedRowCol.col === 0) {
                 game.blockDeltas = [
                     { deltaRow: 0, deltaCol: 1 },
@@ -213,33 +220,54 @@ var game;
     }
     // Helper Function: to get the HTMLElement of draggingPiece's neighbors
     function createDraggingPieceGroup(draggingStartedRowCol) {
+        // If the start dragging positon is in the preparedBox area
         if (!draggingStartedRowCol.isInBoard) {
+            // set the dragging piece
             game.draggingPiece = document.getElementById("MyPieceBox" + draggingStartedRowCol.row + "x" + draggingStartedRowCol.col);
             game.draggingPiece.style['z-index'] = 100;
             game.draggingPiece.style['width'] = game.boardArea.clientWidth / 8.0;
             game.draggingPiece.style['height'] = game.boardArea.clientWidth / 8.0;
+            // get the html element of the neighbors of draggingPiece
             for (var i = 0; i < game.blockDeltas.length; i++) {
                 var newRow = draggingStartedRowCol.row + game.blockDeltas[i].deltaRow;
                 var newCol = draggingStartedRowCol.col + game.blockDeltas[i].deltaCol;
-                log.info("this is piece box " + (i + 1) + " row: " + newRow + " col: " + newCol);
                 var newhtml = document.getElementById("MyPieceBox" + newRow + "x" + newCol);
-                newhtml.style['width'] = game.boardArea.clientWidth / 8.0;
-                newhtml.style['height'] = game.boardArea.clientWidth / 8.0;
-                newhtml.style['z-index'] = 100;
                 game.draggingPieceGroup[i] = newhtml;
             }
+            // set the css style of the neighbors of draggingPiece
+            setDraggingPieceGroupStyle();
         }
         else {
+            // If the start dragging position is in the board area
             game.draggingPiece = document.getElementById("MyPiece" + draggingStartedRowCol.row + "x" + draggingStartedRowCol.col);
+            // set the dragging piece
             game.draggingPiece.style['z-index'] = 100;
+            // get the html element of the neighbors of draggingPiece
             for (var i = 0; i < game.blockDeltas.length; i++) {
                 var newRow = draggingStartedRowCol.row + game.blockDeltas[i].deltaRow;
                 var newCol = draggingStartedRowCol.col + game.blockDeltas[i].deltaCol;
-                log.info("this is piece " + (i + 1) + " row: " + newRow + " col: " + newCol);
                 var newhtml = document.getElementById("MyPiece" + newRow + "x" + newCol);
                 newhtml.style['z-index'] = 100;
                 game.draggingPieceGroup[i] = newhtml;
             }
+        }
+    }
+    // Helper Function: Change the UI of the dragging Piece, from big to small or otherwize
+    function setDraggingPieceGroupStyle() {
+        var size;
+        if (game.needToShrink) {
+            size = getSquareWidthHeight_Box();
+            game.draggingPiece.style['width'] = size.width;
+            game.draggingPiece.style['height'] = size.height;
+            game.draggingPiece.style['z-index'] = 100;
+        }
+        else {
+            size = getSquareWidthHeight();
+        }
+        for (var i = 0; i < game.draggingPieceGroup.length; i++) {
+            game.draggingPieceGroup[i].style['width'] = size.width;
+            game.draggingPieceGroup[i].style['height'] = size.height;
+            game.draggingPieceGroup[i].style['z-index'] = 100;
         }
     }
     // Helper Function: set the top left of the draggingPiece group
@@ -248,20 +276,20 @@ var game;
         var originalSize;
         var originalTopLeft;
         if (needToShrink) {
-            size = getSquareWidthHeight_Box();
+            size = game.preparedSquareSize;
         }
         else {
-            size = getSquareWidthHeight();
+            size = game.boardSquareSize;
         }
         if (isInBoard) {
             setDraggingPieceTopLeft(game.draggingPiece, draggingPieceCurTopLeft, getSquareTopLeft_Box(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col));
             originalTopLeft = getSquareTopLeft(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col);
-            originalSize = getSquareWidthHeight();
+            originalSize = game.boardSquareSize;
         }
         else {
             setDraggingPieceTopLeft(game.draggingPiece, draggingPieceCurTopLeft, getSquareTopLeft_Box(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col));
             originalTopLeft = getSquareTopLeft_Box(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col);
-            originalSize = getSquareWidthHeight_Box();
+            originalSize = game.preparedSquareSize;
         }
         for (var i = 0; i < game.blockDeltas.length; i++) {
             var originalTop = originalTopLeft.top + game.blockDeltas[i].deltaRow * originalSize.height;
@@ -283,19 +311,105 @@ var game;
         var size = getSquareWidthHeight_Box();
         return { top: game.boardArea.clientHeight * 0.91, left: row * game.boardArea.clientWidth * 0.35 + col * size.width };
     }
+    // Helper Funciton: do the drag done, clear the color in original place and put color in the new place
+    function dragDone(from, to, dest) {
+        var flag = "Failed";
+        // Update piece in board
+        if (from.isVertical) {
+            // Piece is vertical 
+            if (dest === "PREPARED") {
+                // from board to prepared area
+                return;
+            }
+            else {
+                // from board to board
+                movePieceFromBoardToBoard(from, to);
+            }
+        }
+        else {
+            // Piece is horizontal
+            if (from.isInBoard) {
+                if (dest === "PREPARED") {
+                    // from board to prepared area
+                    if (game.state.preparedBox[to.row][to.col]) {
+                        // the prepared box already has color
+                        return;
+                    }
+                    else {
+                    }
+                }
+                else {
+                    // from board to board
+                    movePieceFromBoardToBoard(from, to);
+                }
+            }
+            else {
+            }
+        }
+        game.state.preparedBox[from.row][from.col] = null;
+        game.state.preparedBox[to.row][to.col] = 'O';
+        var msg = "Dragged piece " + from.row + "x" + from.col + " to square " + to.row + "x" + to.col + " is " + flag;
+        log.info(msg);
+    }
+    function movePieceFromBoardToBoard(from, to) {
+        if (isInsideBoard(to.row, to.col, game.blockDeltas)) {
+            game.indication++;
+            game.boardDragged[to.row][to.col][game.indication] = game.boardDragged[from.row][from.col][from.indication];
+            game.boardDragged[from.row][from.col].delete(from.indication);
+            for (var i = 0; i < game.blockDeltas.length; i++) {
+                var oldRow = from.row + game.blockDeltas[i].deltaRow;
+                var oldCol = from.row + game.blockDeltas[i].deltaCol;
+                var color = game.boardDragged[oldRow][oldCol][from.indication];
+                var newRow = to.row + game.blockDeltas[i].deltaRow;
+                var newCol = to.col + game.blockDeltas[i].deltaCol;
+                game.boardDragged[newRow][newCol][game.indication] = color;
+                // clear the color in the original place
+                game.boardDragged[oldRow][oldCol].delete(from.indication);
+            }
+        }
+        else {
+            return;
+        }
+    }
+    // Helper Function: initialize the boardDragged
+    function getInitialBoardDragged() {
+        // extend the board to initialize the boundary
+        for (var i = 0; i < gameLogic.ROWS + 2; i++) {
+            game.boardDragged[i] = [];
+            for (var j = 0; j < gameLogic.COLS + 2; j++) {
+                // every cell in boardDragged is a map datastructure
+                // the key is the indication, so the initial value is 0
+                game.boardDragged[i][j] = { 0: '' };
+            }
+        }
+        for (var i = 0; i < gameLogic.ROWS; i++) {
+            for (var j = 0; j < gameLogic.COLS; j++) {
+                game.boardDragged[i + 2][j + 2][0] = game.state.board[i][j];
+            }
+        }
+    }
     function getSquareWidthHeight() {
+        game.boardSquareSize = { height: game.boardArea.clientWidth / game.colsNum, width: game.boardArea.clientWidth / game.rowsNum };
         return {
-            width: game.boardArea.clientWidth / game.rowsNum,
-            height: game.boardArea.clientWidth / game.colsNum
+            height: game.boardArea.clientWidth / game.colsNum,
+            width: game.boardArea.clientWidth / game.rowsNum
         };
     }
     function getSquareWidthHeight_Box() {
+        game.preparedSquareSize = { height: game.boardArea.clientWidth * 0.9 / game.colsBox, width: game.boardArea.clientWidth * 0.9 / game.colsBox };
         return {
-            width: game.boardArea.clientWidth * 0.9 / game.colsBox,
-            height: game.boardArea.clientWidth * 0.9 / game.colsBox
+            height: game.boardArea.clientWidth * 0.9 / game.colsBox,
+            width: game.boardArea.clientWidth * 0.9 / game.colsBox
         };
     }
-    // Helper Function: to judge whether the neighbor cell is in the boardArea
+    // function getSquareCenterXY(row: number, col: number) {
+    //     var size = getSquareWidthHeight();
+    //     return {
+    //         x: col * size.width + size.width / 2,
+    //         y: row * size.height + size.height / 2
+    //     };
+    // }
+    //Helper Function: to judge whether the neighbor cell is in the boardArea
     function isInsideBoard(row, col, blockDeltas) {
         for (var i = 0; i < blockDeltas.length; i++) {
             var delta = blockDeltas[i];
@@ -306,22 +420,6 @@ var game;
             }
         }
         return true;
-    }
-    // function getSquareCenterXY(row: number, col: number) {
-    //     var size = getSquareWidthHeight();
-    //     return {
-    //         x: col * size.width + size.width / 2,
-    //         y: row * size.height + size.height / 2
-    //     };
-    // }
-    function getInitialBoardDragged() {
-        // extend the board to initialize the boundary
-        for (var i = 0; i < gameLogic.ROWS + 2; i++) {
-            game.boardDragged[i] = [];
-            for (var j = 0; j < gameLogic.COLS + 2; j++) {
-                game.boardDragged[i][j] = 0;
-            }
-        }
     }
     //------------------------------------------------------------------------------------------------
     /**
@@ -355,23 +453,21 @@ var game;
     /**
      * When you click the cell in the game area, it will do a move operation and update of the UI
      */
-    function cellClicked(row, col, color) {
-        log.info("Clicked on cell:", row, col);
-        if (window.location.search === "?throwException") {
-            throw new Error("Throwing the error because URL has '?throwException'");
-        }
-        var nextMove = null;
-        try {
-            nextMove = gameLogic.createMove(game.state, [{ row: row, col: col, color: color }], game.currentUpdateUI.move.turnIndexAfterMove);
-        }
-        catch (e) {
-            log.info(["Cell is already full in position:", row, col]);
-            return;
-        }
-        // Move is legal, make it!
-        makeMove(nextMove);
-    }
-    game.cellClicked = cellClicked;
+    // export function cellClicked(row: number, col: number, color: string): void {
+    //     log.info("Clicked on cell:", row, col);
+    //     if (window.location.search === "?throwException") { // to test encoding a stack trace with sourcemap
+    //         throw new Error("Throwing the error because URL has '?throwException'");
+    //     }
+    //     let nextMove: IMove = null;
+    //     try {
+    //         nextMove = gameLogic.createMove(state, [{row: row, col: col, color: color}], currentUpdateUI.move.turnIndexAfterMove);
+    //     } catch (e) {
+    //         log.info(["Cell is already full in position:", row, col]);
+    //         return;
+    //     }
+    //     // Move is legal, make it!
+    //     makeMove(nextMove);
+    // }
     /**
      * To do the real move operation of the game;
      */
@@ -488,4 +584,8 @@ angular.module('myApp', ['gameServices'])
 });
 // what is updateUI, what is playmode
 // use enum to notate the right, left, top and down
+//TODO set draggin'S params CAN BE OPTIMIZED
+// map in the dragged board is a pit
+// TODO Z-INDEX need to do better
+//TODO to compute the pass 
 //# sourceMappingURL=game.js.map
