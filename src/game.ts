@@ -150,7 +150,7 @@ module game {
                 if (type === "touchend") {
                     let from = draggingStartedRowCol;
                     let to = {row: row, col: col};
-                    //dragDone(from, to, "PREPARED");
+                    dragDone(from, to, "PREPARED");
                 } else {
                     // Drag continue
                     setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(row, col), false, draggingStartedRowCol.isInBoard);
@@ -362,8 +362,9 @@ module game {
 
     // Helper Funciton: do the drag done, clear the color in original place and put color in the new place
     function dragDone(from: any, to: any, dest: string) {
-        let flag = "Failed";
-        // Update piece in board
+        let msg = "Dragged piece " + from.row + "x" + from.col + " to square " + to.row + "x" + to.col;
+        log.info(msg);
+
         if (from.isVertical) {
             // Piece is vertical 
             if (dest === "PREPARED") {
@@ -371,61 +372,111 @@ module game {
                 return;
             } else {
                 // from board to board
-                movePieceFromBoardToBoard(from, to);
+                movePieceToBoard(from, to);
             }
         } else {
             // Piece is horizontal
-            if (from.isInBoard) {
-                if (dest === "PREPARED") {
-                    // from board to prepared area
-                    if (state.preparedBox[to.row][to.col]) {
-                        // the prepared box already has color
+            if (dest === "PREPARED") {
+                if (state.preparedBox[to.row][to.col]) {
+                        // if the prepared box already has color, it's invalid to put the piece
                         return;
-                    } else {
-
-                    }
-                } else {
-                    // from board to board
-                    movePieceFromBoardToBoard(from, to);
-                }
-            } else {
-
+                } 
+                // from board to prepared area
+                // from prepared to prepared
+                movePieceToPrepared(from, to);
             }
 
+            if (dest === "BOARD") {
+                // from board to board
+                // from prepared to board
+                movePieceToBoard(from, to);
+            }
         }
-
-        state.preparedBox[from.row][from.col] = null;
-        state.preparedBox[to.row][to.col] = 'O';
-
-        let msg = "Dragged piece " + from.row + "x" + from.col + " to square " + to.row + "x" + to.col + " is " + flag;
-        log.info(msg);
     }
 
-    function movePieceFromBoardToBoard(from: any, to: any) {
+    function movePieceToPrepared(from: any, to: any) {
+        if (blockDeltas[0].col === 1 &&  blockDeltas[1].col === 2 ) {
+            setPieceToFitPreparedArea(from, to, 0, [0, 1, 2]);
+        } else if (blockDeltas[0].col === -1 &&  blockDeltas[1].col === 1 ){
+            setPieceToFitPreparedArea(from, to, 1, [0, -1, 1]);
+        } else if (blockDeltas[0].col === -2 &&  blockDeltas[1].col === -1 ){
+            setPieceToFitPreparedArea(from, to, 2, [0, -2, -1]);
+        }
+
+        // clear the original color 
+        if (from.isInBoard) {
+            clearOriginalPieceInBoard(from);
+        } else {
+            clearOriginalPieceInPrepared(from);
+        }
+    }
+
+    function setPieceToFitPreparedArea(from: any, to: any, realCol: number, colDelta: number[]) {
+        for (let i = 0; i < colDelta.length; i++) {
+            let delta = colDelta[i];
+            if (from.isInBoard) {
+                state.preparedBox[to.row][realCol+delta] = boardDragged[from.row][from.col+delta][from.indication];
+            } else {
+                state.preparedBox[to.row][realCol+delta] = state.preparedBox[from.row][from.col+delta];
+            }     
+        }
+    }
+
+    function movePieceToBoard(from: any, to: any) {
         if (isInsideBoard(to.row, to.col, blockDeltas)) {
             indication++;
-            boardDragged[to.row][to.col][indication] = boardDragged[from.row][from.col][from.indication];
-            boardDragged[from.row][from.col].delete(from.indication);
+            if (from.isInBoard) {
+                boardDragged[to.row][to.col][indication] = boardDragged[from.row][from.col][from.indication];
+            } else {
+                boardDragged[to.row][to.col][indication] = state.preparedBox[from.row][from.col];
+            }
+            
             for (let i = 0; i < blockDeltas.length; i++) {
                 let oldRow = from.row + blockDeltas[i].deltaRow;
                 let oldCol = from.row + blockDeltas[i].deltaCol;
-                let color = boardDragged[oldRow][oldCol][from.indication];
-                
+                let color: string;
+
+                if (from.isInBoard) {
+                    color = boardDragged[oldRow][oldCol][from.indication];
+                } else {
+                    color = state.preparedBox[oldRow][oldCol];
+                }
+                  
                 let newRow = to.row + blockDeltas[i].deltaRow;
                 let newCol = to.col + blockDeltas[i].deltaCol;
                 boardDragged[newRow][newCol][indication] = color;
-                // clear the color in the original place
-                boardDragged[oldRow][oldCol].delete(from.indication);
             }
+            // clear the color in the original place
+            if (from.isInBoard) {
+                clearOriginalPieceInBoard(from);
+            } else {
+                clearOriginalPieceInPrepared(from);
+            }
+            
         } else {
             return;
         }
     }
 
+    function clearOriginalPieceInBoard(from: any) {
+        boardDragged[from.row][from.col].delete(from.indication);
+        for (let i = 0; i < blockDeltas.length; i++) {
+            let oldRow = from.row + blockDeltas[i].deltaRow;
+            let oldCol = from.row + blockDeltas[i].deltaCol;
+            // clear the color in the original place
+            boardDragged[oldRow][oldCol].delete(from.indication);
+        }
+    }
 
-
-
-
+    function clearOriginalPieceInPrepared(from: any) {
+        state.preparedBox[from.row][from.col] = '';
+        for (let i = 0; i < blockDeltas.length; i++) {
+            let oldRow = from.row + blockDeltas[i].deltaRow;
+            let oldCol = from.row + blockDeltas[i].deltaCol;
+            // clear the color in the original place
+            state.preparedBox[oldRow][oldCol] = '';
+        }
+    }
 
 
 
@@ -443,6 +494,7 @@ module game {
 
         for (let i = 0; i < gameLogic.ROWS; i++) {
             for (let j = 0; j < gameLogic.COLS; j++) {
+                // put the original color of the board into boardDragged
                 boardDragged[i+2][j+2][0]= state.board[i][j];
             }
         }
@@ -675,7 +727,7 @@ angular.module('myApp', ['gameServices'])
 
 //TODO set draggin'S params CAN BE OPTIMIZED
 
-// map in the dragged board is a pit
+// map in the dragged board is a pit, delete may not work
 
 // TODO Z-INDEX need to do better
 
