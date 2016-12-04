@@ -86,7 +86,15 @@ var game;
         else {
             // the first touch in the board but not in the prepared area
             if (!game.draggingPiece && y < game.boardArea.clientWidth + game.boardArea.clientWidth * 0.0375) {
-                // TODO: START FROM BOARD TO BOARD OR FROM BOARD TO PREPARED
+                // TODO: START FROM BOARD
+                var row = Math.floor(game.rowsNum * y / game.boardArea.clientWidth);
+                var col = Math.floor(game.colsNum * x / game.boardArea.clientWidth);
+                log.info("this is in Board area: row is " + row + " col is " + col);
+                if (type === "touchstart" && !game.draggingStartedRowCol) {
+                    // drag started in board
+                    log.info("drag start AT BOARD.");
+                    game.draggingStartedRowCol = { row: row, col: col, isInBoard: false, isVertical: false, indication: -1 };
+                }
                 return;
             }
             if (game.draggingPiece && y < game.boardArea.clientWidth + game.boardArea.clientWidth * 0.0375) {
@@ -96,7 +104,7 @@ var game;
                 var col = Math.floor(game.colsBox * x / game.boardArea.clientWidth) % game.rowsBox;
                 var row = Math.floor(game.rowsBox * x / game.boardArea.clientWidth);
                 if (type === "touchstart" && !game.draggingStartedRowCol) {
-                    // drag started
+                    // drag started in prepared area
                     log.info("drag start AT PREPARED.");
                     game.draggingStartedRowCol = { row: row, col: col, isInBoard: false, isVertical: false, indication: -1 };
                     computeBlockDeltas(game.draggingStartedRowCol, game.draggingStartedRowCol.isInBoard);
@@ -571,52 +579,51 @@ var game;
         var cell = game.state.board[row][col];
         //log.info(typeof state);
         //log.info("this is the cell, row: " + row + " col: " + col + " color: " + cell);
-        return true;
+        return game.state.board[row][col] !== '';
     }
     game.shouldShowImage = shouldShowImage;
-    function isPieceR(row, col) {
-        return game.state.board[row][col] === 'R';
-    }
-    game.isPieceR = isPieceR;
-    function isPieceG(row, col) {
-        //log.info(state.board[row][col] === 'G');
-        return game.state.board[row][col] === 'G';
-    }
-    game.isPieceG = isPieceG;
-    function isPieceB(row, col) {
-        return game.state.board[row][col] === 'B';
-    }
-    game.isPieceB = isPieceB;
-    function isPieceY(row, col) {
-        return game.state.board[row][col] === 'Y';
-    }
-    game.isPieceY = isPieceY;
+    // export function isPieceR(row: number, col: number): boolean {      
+    //     return state.board[row][col] === 'R';
+    // }
+    // export function isPieceG(row: number, col: number): boolean {
+    //     //log.info(state.board[row][col] === 'G');
+    //     return state.board[row][col] === 'G';
+    // }
+    // export function isPieceB(row: number, col: number): boolean {
+    //     return state.board[row][col] === 'B';
+    // }
+    // export function isPieceY(row: number, col: number): boolean {
+    //     return state.board[row][col] === 'Y';
+    // }  
     function shouldShowImage_Box(row, col) {
         var cell = game.state.board[row][col];
         //log.info("this is the cell, row: " + row + " col: " + col + " color: " + state.preparedBox[row][col]);
         return true;
     }
     game.shouldShowImage_Box = shouldShowImage_Box;
-    function isPieceR_Box(row, col) {
-        return game.state.preparedBox[row][col] === 'R';
-    }
-    game.isPieceR_Box = isPieceR_Box;
-    function isPieceG_Box(row, col) {
-        return game.state.preparedBox[row][col] === 'G';
-    }
-    game.isPieceG_Box = isPieceG_Box;
-    function isPieceB_Box(row, col) {
-        return game.state.preparedBox[row][col] === 'B';
-    }
-    game.isPieceB_Box = isPieceB_Box;
-    function isPieceY_Box(row, col) {
-        return game.state.preparedBox[row][col] === 'Y';
-    }
-    game.isPieceY_Box = isPieceY_Box;
-    // export function shouldSlowlyAppear(row: number, col: number): boolean {
-    //     return state.delta &&
-    //         state.delta.row === row && state.delta.col === col;
+    // export function isPieceR_Box(row: number, col: number): boolean {
+    //     return state.preparedBox[row][col] === 'R';
     // }
+    // export function isPieceG_Box(row: number, col: number): boolean {
+    //     return state.preparedBox[row][col] === 'G';
+    // }
+    // export function isPieceB_Box(row: number, col: number): boolean {
+    //     return state.preparedBox[row][col] === 'B';
+    // }
+    // export function isPieceY_Box(row: number, col: number): boolean {
+    //     return state.preparedBox[row][col] === 'Y';
+    // } 
+    function shouldSlowlyAppear(row, col) {
+        // return state.delta &&
+        //     state.delta.row === row && state.delta.col === col;
+        return true;
+    }
+    game.shouldSlowlyAppear = shouldSlowlyAppear;
+    function getBoardBoxColor(row, col) {
+        var cellStyle = game.state.board[row][col];
+        return cellStyle;
+    }
+    game.getBoardBoxColor = getBoardBoxColor;
     function getPreparedBoxColor(row, col) {
         var color = game.state.preparedBox[row][col];
         if (color === 'R') {
@@ -644,5 +651,6 @@ angular.module('myApp', ['gameServices'])
 //TODO set draggin'S params CAN BE OPTIMIZED
 // map in the dragged board is a pit, delete may not work
 // TODO Z-INDEX need to do better
-//TODO to compute the pass 
+//TODO to compute the pass
+//TODO translation initialize 
 //# sourceMappingURL=game.js.map

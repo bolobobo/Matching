@@ -65,8 +65,6 @@ module game {
         });
 
         //initialize the drag-n-drop varibles
-        
-
         gameArea = document.getElementById("gameArea");
         boardArea = document.getElementById("boardArea");
         gamePrepare = document.getElementById("gamePrepare");
@@ -114,7 +112,15 @@ module game {
         } else {
             // the first touch in the board but not in the prepared area
             if (!draggingPiece && y < boardArea.clientWidth + boardArea.clientWidth*0.0375) {
-                // TODO: START FROM BOARD TO BOARD OR FROM BOARD TO PREPARED
+                // TODO: START FROM BOARD
+                let row = Math.floor(rowsNum * y / boardArea.clientWidth);
+                let col = Math.floor(colsNum * x / boardArea.clientWidth);
+                log.info("this is in Board area: row is " + row + " col is " + col);
+                if (type === "touchstart" && !draggingStartedRowCol) {
+                    // drag started in board
+                    log.info("drag start AT BOARD.");
+                    draggingStartedRowCol = {row: row, col: col, isInBoard: false, isVertical: false, indication: -1};
+                }
                 return;
             }
             if (draggingPiece && y < boardArea.clientWidth + boardArea.clientWidth*0.0375) {
@@ -136,7 +142,7 @@ module game {
                 let row = Math.floor(rowsBox * x / boardArea.clientWidth);
                 
                 if (type === "touchstart" && !draggingStartedRowCol) {
-                    // drag started
+                    // drag started in prepared area
                     log.info("drag start AT PREPARED.");
                     draggingStartedRowCol = {row: row, col: col, isInBoard: false, isVertical: false, indication: -1};
                     computeBlockDeltas(draggingStartedRowCol, draggingStartedRowCol.isInBoard);
@@ -653,51 +659,56 @@ module game {
         let cell = state.board[row][col];
         //log.info(typeof state);
         //log.info("this is the cell, row: " + row + " col: " + col + " color: " + cell);
-        return true;
+        return state.board[row][col] !== '';
     }
 
-    export function isPieceR(row: number, col: number): boolean {      
-        return state.board[row][col] === 'R';
-    }
+    // export function isPieceR(row: number, col: number): boolean {      
+    //     return state.board[row][col] === 'R';
+    // }
 
-    export function isPieceG(row: number, col: number): boolean {
-        //log.info(state.board[row][col] === 'G');
-        return state.board[row][col] === 'G';
-    }
+    // export function isPieceG(row: number, col: number): boolean {
+    //     //log.info(state.board[row][col] === 'G');
+    //     return state.board[row][col] === 'G';
+    // }
 
-    export function isPieceB(row: number, col: number): boolean {
-        return state.board[row][col] === 'B';
-    }
+    // export function isPieceB(row: number, col: number): boolean {
+    //     return state.board[row][col] === 'B';
+    // }
 
-    export function isPieceY(row: number, col: number): boolean {
-        return state.board[row][col] === 'Y';
-    }  
+    // export function isPieceY(row: number, col: number): boolean {
+    //     return state.board[row][col] === 'Y';
+    // }  
 
     export function shouldShowImage_Box(row: number, col: number): boolean {
         let cell = state.board[row][col];
         //log.info("this is the cell, row: " + row + " col: " + col + " color: " + state.preparedBox[row][col]);
         return true;
     }
-    export function isPieceR_Box(row: number, col: number): boolean {
-        return state.preparedBox[row][col] === 'R';
-    }
-
-    export function isPieceG_Box(row: number, col: number): boolean {
-        return state.preparedBox[row][col] === 'G';
-    }
-
-    export function isPieceB_Box(row: number, col: number): boolean {
-        return state.preparedBox[row][col] === 'B';
-    }
-
-    export function isPieceY_Box(row: number, col: number): boolean {
-        return state.preparedBox[row][col] === 'Y';
-    } 
-
-    // export function shouldSlowlyAppear(row: number, col: number): boolean {
-    //     return state.delta &&
-    //         state.delta.row === row && state.delta.col === col;
+    // export function isPieceR_Box(row: number, col: number): boolean {
+    //     return state.preparedBox[row][col] === 'R';
     // }
+
+    // export function isPieceG_Box(row: number, col: number): boolean {
+    //     return state.preparedBox[row][col] === 'G';
+    // }
+
+    // export function isPieceB_Box(row: number, col: number): boolean {
+    //     return state.preparedBox[row][col] === 'B';
+    // }
+
+    // export function isPieceY_Box(row: number, col: number): boolean {
+    //     return state.preparedBox[row][col] === 'Y';
+    // } 
+
+    export function shouldSlowlyAppear(row: number, col: number): boolean {
+        // return state.delta &&
+        //     state.delta.row === row && state.delta.col === col;
+        return true;
+    }
+    export function getBoardBoxColor(row: number, col: number): string {
+        let cellStyle = state.board[row][col];
+        return cellStyle; 
+    }
 
     export function getPreparedBoxColor(row: number, col: number): string {
         let color = state.preparedBox[row][col];
@@ -732,3 +743,5 @@ angular.module('myApp', ['gameServices'])
 // TODO Z-INDEX need to do better
 
 //TODO to compute the pass
+
+//TODO translation initialize
