@@ -126,7 +126,7 @@ module game {
                         // no piece be moved in this cell
                         return;
                     }
-                    
+
                     draggingStartedRowCol = {row: row, col: col, isInBoard: true, indication: ind};
                     computeBlockDeltas(draggingStartedRowCol, draggingStartedRowCol.isInBoard);
 
@@ -528,20 +528,13 @@ module game {
 
     // Helper Function: initialize the boardDragged
     function getInitialBoardDragged() {
-        // extend the board to initialize the boundary
-        for (let i = 0; i < gameLogic.ROWS + 2; i++) {
-            boardDragged[i] = [];
-            for (let j = 0; j < gameLogic.COLS + 2; j++) {
-                // every cell in boardDragged is a map datastructure
-                // the key is the indication, so the initial value is 0
-                boardDragged[i][j] = { 0: ''};
-            }
-        }
-
         for (let i = 0; i < gameLogic.ROWS; i++) {
+            boardDragged[i] = [];
             for (let j = 0; j < gameLogic.COLS; j++) {
                 // put the original color of the board into boardDragged
-                boardDragged[i+2][j+2][0]= state.board[i][j];
+                // use the map datastructure to store the layer
+                boardDragged[i][j] = {};
+                boardDragged[i][j] = {0 : state.board[i][j]};
             }
         }
     }

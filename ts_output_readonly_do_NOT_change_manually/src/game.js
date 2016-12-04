@@ -470,19 +470,13 @@ var game;
     }
     // Helper Function: initialize the boardDragged
     function getInitialBoardDragged() {
-        // extend the board to initialize the boundary
-        for (var i = 0; i < gameLogic.ROWS + 2; i++) {
-            game.boardDragged[i] = [];
-            for (var j = 0; j < gameLogic.COLS + 2; j++) {
-                // every cell in boardDragged is a map datastructure
-                // the key is the indication, so the initial value is 0
-                game.boardDragged[i][j] = { 0: '' };
-            }
-        }
         for (var i = 0; i < gameLogic.ROWS; i++) {
+            game.boardDragged[i] = [];
             for (var j = 0; j < gameLogic.COLS; j++) {
                 // put the original color of the board into boardDragged
-                game.boardDragged[i + 2][j + 2][0] = game.state.board[i][j];
+                // use the map datastructure to store the layer
+                game.boardDragged[i][j] = {};
+                game.boardDragged[i][j] = { 0: game.state.board[i][j] };
             }
         }
     }
