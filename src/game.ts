@@ -109,7 +109,7 @@ module game {
                 // Drag the piece where the touch is (without snapping to a square). 
                 // Just to show the drag position
                 // do not need to shrink the size of the cell
-                setDraggingPieceGroupTopLeft({top: y - boardSquareSize.height / 2, left: x - boardSquareSize.width / 2}, needToShrink, draggingStartedRowCol.isInBoard);
+                setDraggingPieceGroupTopLeft({top: y - boardSquareSize.height / 2, left: x - boardSquareSize.width / 2}, draggingStartedRowCol.isInBoard);
             }
         } else if (y < boardArea.clientWidth + boardArea.clientWidth*0.0375) {
                 // the touch in the board area but not in the prepared area
@@ -121,29 +121,34 @@ module game {
                 if (type === "touchstart" && !draggingStartedRowCol) {
                     // drag started in board
                     log.info("drag start AT BOARD.");
-                    let ind: number = computeIndication(row, col);
-                    if (ind === 0) {
+                    let ind: number = computeIndicationAndLayer(row, col).ind;
+                    let layer: number = computeIndicationAndLayer(row, col).layer;
+                    if (ind === -1) {
                         // no piece be moved in this cell
                         return;
                     }
 
-                    draggingStartedRowCol = {row: row, col: col, isInBoard: true, indication: ind};
+                    draggingStartedRowCol = {row: row, col: col, isInBoard: true, indication: ind, layer: layer};
                     computeBlockDeltas(draggingStartedRowCol, draggingStartedRowCol.isInBoard);
-
+                    createDraggingPieceGroup(draggingStartedRowCol);
+                    setDraggingPieceGroupTopLeft(getSquareTopLeft(row, col), draggingStartedRowCol.isInBoard);
                 }
 
+                if (!draggingPiece) {
+                    return;
+                }
 
+                if (type === "touchend") {
+                    let from = draggingStartedRowCol;
+                    let to = {row: row, col: col};
+                    dragDone(from, to, "PREPARED");
+                } else {
+                    // Drag continue
+                    setDraggingPieceGroupTopLeft(getSquareTopLeft(row, col), draggingStartedRowCol.isInBoard);
+                } 
                 //TODO: FROM BOARD TO BOARD AND FROM BOARD TO PREPARED
                 // MOVE FROM EVERYWHERE
-                // 1: the drag in the board part
-
-                // drag start
-
-                // drag continue
-
-
                 // drag ended
-
         } else {
             // Position: Inside prepared box area. Let's find the containing square's row and col
             let col = Math.floor(colsBox * x / boardArea.clientWidth) % rowsBox;
@@ -153,10 +158,10 @@ module game {
                 // drag started in prepared area
                 log.info("drag start AT PREPARED.");
                 
-                draggingStartedRowCol = {row: row, col: col, isInBoard: false, indication: -1};
+                draggingStartedRowCol = {row: row, col: col, isInBoard: false, indication: -1, layer: -1};
                 computeBlockDeltas(draggingStartedRowCol, draggingStartedRowCol.isInBoard);
                 createDraggingPieceGroup(draggingStartedRowCol);
-                setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(row, col), needToShrink, draggingStartedRowCol.isInBoard);
+                setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(row, col), draggingStartedRowCol.isInBoard);
             }
             if (!draggingPiece) {
                 return;
@@ -168,7 +173,7 @@ module game {
                 dragDone(from, to, "PREPARED");
             } else {
                 // Drag continue
-                setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(row, col), false, draggingStartedRowCol.isInBoard);
+                setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(row, col), draggingStartedRowCol.isInBoard);
             } 
         }
 
@@ -179,12 +184,12 @@ module game {
             if (!draggingStartedRowCol.isInBoard) {
                 needToShrink = true;
                 setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(draggingStartedRowCol.row, draggingStartedRowCol.col), 
-                needToShrink, draggingStartedRowCol.isInBoard);
+                draggingStartedRowCol.isInBoard);
                 setDraggingPieceGroupStyle();
             } else {
                 needToShrink = false;
                 setDraggingPieceGroupTopLeft(getSquareTopLeft(draggingStartedRowCol.row, draggingStartedRowCol.col), 
-                needToShrink, draggingStartedRowCol.isInBoard);
+                draggingStartedRowCol.isInBoard);
                 
             }
             // clear the draggingPiece every time when ended
@@ -226,8 +231,9 @@ module game {
             tempBoardDragged[i] = [];
             for (let j = 0; j < gameLogic.COLS + 2; j++) {
                 // every cell in boardDragged is a map datastructure
-                // the key is the indication, so the initial value is 0
-                tempBoardDragged[i][j] = {0:''};
+                // the key is the indication, the value is the color
+                tempBoardDragged[i][j] = {};
+                //tempBoardDragged[i][j] = {0:''};
             }
         }
 
@@ -293,14 +299,16 @@ module game {
     }
 
     // Helper Function: compute the hightest indication in specific cell
-    function computeIndication(row: number, col: number): number {
-        let result: number = 0;
-        for (let key of boardDragged[row][col].keys()) {
-            if(key > result) {
-                key = result;
+    function computeIndicationAndLayer(row: number, col: number): any {
+        let ind: number = -1;
+        let layer: number = 0;
+        for (let key in boardDragged[row][col]) {
+            if(parseInt(key) > ind) {
+                ind = parseInt(key);
             }
+            layer++;
         }
-        return result;
+        return {ind: ind, layer: layer};
     }
 
     // Helper Function: to get the HTMLElement of draggingPiece's neighbors
@@ -326,7 +334,8 @@ module game {
 
         } else {
             // If the start dragging position is in the board area
-            draggingPiece = document.getElementById("MyPiece" + draggingStartedRowCol.row + "x" + draggingStartedRowCol.col);
+            let layer = draggingStartedRowCol.layer;
+            draggingPiece = document.getElementById("MyPieceBoard_" + layer + "_Layer" + draggingStartedRowCol.row + "x" + draggingStartedRowCol.col);
             // set the dragging piece
             draggingPiece.style['z-index'] = 100;
 
@@ -334,7 +343,7 @@ module game {
             for (let i = 0; i < blockDeltas.length; i++) {
                 let newRow = draggingStartedRowCol.row + blockDeltas[i].deltaRow;
                 let newCol = draggingStartedRowCol.col + blockDeltas[i].deltaCol;
-                let newhtml: any = document.getElementById("MyPiece" + newRow + "x" + newCol);
+                let newhtml: any = document.getElementById("MyPieceBoard_" + layer + "_Layer" + newRow + "x" + newCol);
                 newhtml.style['z-index'] = 100;
                 draggingPieceGroup[i] = newhtml;
             }
@@ -361,7 +370,7 @@ module game {
     }
 
     // Helper Function: set the top left of the draggingPiece group
-    function setDraggingPieceGroupTopLeft(draggingPieceCurTopLeft: TopLeft, needToShrink: boolean, isInBoard: boolean) {
+    function setDraggingPieceGroupTopLeft(draggingPieceCurTopLeft: TopLeft, isInBoard: boolean) {
         
         let size: any;
         let originalSize: any;
@@ -524,8 +533,6 @@ module game {
         }
     }
 
-
-
     // Helper Function: initialize the boardDragged
     function getInitialBoardDragged() {
         for (let i = 0; i < gameLogic.ROWS; i++) {
@@ -534,7 +541,7 @@ module game {
                 // put the original color of the board into boardDragged
                 // use the map datastructure to store the layer
                 boardDragged[i][j] = {};
-                boardDragged[i][j] = {0 : state.board[i][j]};
+                //boardDragged[i][j] = {0 : state.board[i][j]};
             }
         }
     }
@@ -778,3 +785,5 @@ angular.module('myApp', ['gameServices'])
 //TODO to compute the pass
 
 //TODO translation initialize
+
+// optimize compute delta in board
