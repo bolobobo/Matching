@@ -48,6 +48,8 @@ module game {
     export let boardDragged: any = []; // to record which box has been moved to the board
     export let indication: number; // to indicate the cells in the same box when they are moved to board
     export let needToShrink: boolean = false; // At begginning, do not need to Shrink
+    export let isVertical: boolean = false; // denote the shape of the draggingPieceGroup 
+    
     /**
      * Register for the turnBasedService3.js file 
      */
@@ -119,12 +121,15 @@ module game {
                 if (type === "touchstart" && !draggingStartedRowCol) {
                     // drag started in board
                     log.info("drag start AT BOARD.");
-                    if (boardDragged[row][col].length === 1) {
+                    let ind: number = computeIndication(row, col);
+                    if (ind === 0) {
                         // no piece be moved in this cell
                         return;
                     }
-                    draggingStartedRowCol = {row: row, col: col, isInBoard: true, isVertical: false, indication: -1};
+                    
+                    draggingStartedRowCol = {row: row, col: col, isInBoard: true, indication: ind};
                     computeBlockDeltas(draggingStartedRowCol, draggingStartedRowCol.isInBoard);
+
                 }
 
 
@@ -147,8 +152,8 @@ module game {
             if (type === "touchstart" && !draggingStartedRowCol) {
                 // drag started in prepared area
                 log.info("drag start AT PREPARED.");
-                computeIndication(row, col);
-                draggingStartedRowCol = {row: row, col: col, isInBoard: false, isVertical: false, indication: -1};
+                
+                draggingStartedRowCol = {row: row, col: col, isInBoard: false, indication: -1};
                 computeBlockDeltas(draggingStartedRowCol, draggingStartedRowCol.isInBoard);
                 createDraggingPieceGroup(draggingStartedRowCol);
                 setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(row, col), needToShrink, draggingStartedRowCol.isInBoard);
@@ -188,6 +193,7 @@ module game {
             draggingPieceGroup = [];
             blockDeltas = [];
             needToShrink = false;
+            isVertical = false;
         }  
     }
 
@@ -214,50 +220,71 @@ module game {
     
     // TODO: this function is too silly
     function computeBlockDeltasInBoard(draggingStartedRowCol: any) {
+        let tempBoardDragged: any = [];
+        // extend the board to initialize the boundary
+        for (let i = 0; i < gameLogic.ROWS + 2; i++) {
+            tempBoardDragged[i] = [];
+            for (let j = 0; j < gameLogic.COLS + 2; j++) {
+                // every cell in boardDragged is a map datastructure
+                // the key is the indication, so the initial value is 0
+                tempBoardDragged[i][j] = {0:''};
+            }
+        }
+
+        for (let i = 0; i < gameLogic.ROWS; i++) {
+            for (let j = 0; j < gameLogic.COLS; j++) {
+                // copy each boardDragged to tempBoardDragged
+                tempBoardDragged[i+2][j+2]= angular.copy(boardDragged[i][j]);
+            }
+        }
+
         let row = draggingStartedRowCol.row + 2;
         let col = draggingStartedRowCol.col + 2;
-        let value = draggingStartedRowCol.indication;
+        let ind = draggingStartedRowCol.indication;
+        //let value = boardDragged[row][col][ind];
 
-        if (boardDragged[row-1][col] === value) {
+        if (tempBoardDragged[row-1][col].has(ind)) {
             // up 
-            if (boardDragged[row-2][col] === value) {
+            if (tempBoardDragged[row-2][col].has(ind)) {
                 blockDeltas = [
                 {deltaRow: -1, deltaCol: 0},
                 {deltaRow: -2, deltaCol: 0}];
-            } else if (boardDragged[row+1][col] === value) {
+            } else if (tempBoardDragged[row+1][col].has(ind)) {
                 blockDeltas = [
                 {deltaRow: -1, deltaCol: 0},
                 {deltaRow: 1, deltaCol: 0}];
             }
-        } else if (boardDragged[row+1][col] === value) {
+            isVertical = true;
+        } else if (tempBoardDragged[row+1][col].has(ind)) {
             // down
-            if (boardDragged[row+2][col] === value) {
+            if (tempBoardDragged[row+2][col].has(ind)) {
                 blockDeltas = [
                 {deltaRow: 1, deltaCol: 0},
                 {deltaRow: 2, deltaCol: 0}];               
-            } else if (boardDragged[row-1][col] === value) {
+            } else if (tempBoardDragged[row-1][col].has(ind)) {
                 blockDeltas = [
                 {deltaRow: -1, deltaCol: 0},
                 {deltaRow: 1, deltaCol: 0}];                  
             }
-        } else if (boardDragged[row][col-1] === value) {
+            isVertical = true;
+        } else if (tempBoardDragged[row][col-1].has(ind)) {
             // left
-            if (boardDragged[row][col-2] === value) {
+            if (tempBoardDragged[row][col-2].has(ind)) {
                 blockDeltas = [
                 {deltaRow: 0, deltaCol: -1},
                 {deltaRow: 0, deltaCol: -2}];    
-            } else if (boardDragged[row][col+1] === value) {
+            } else if (tempBoardDragged[row][col+1].has(ind)) {
                 blockDeltas = [
                 {deltaRow: 0, deltaCol: -1},
                 {deltaRow: 0, deltaCol: 1}];  
             }
-        } else if (boardDragged[row][col+1] == value) {
+        } else if (tempBoardDragged[row][col+1].has(ind)) {
             //right
-            if (boardDragged[row][col+2] === value) {
+            if (tempBoardDragged[row][col+2].has(ind)) {
                 blockDeltas = [
                 {deltaRow: 0, deltaCol: 1},
                 {deltaRow: 0, deltaCol: 2}];  
-            } else if (boardDragged[row][col-1] === value) {
+            } else if (tempBoardDragged[row][col-1].has(ind)) {
                 blockDeltas = [
                 {deltaRow: 0, deltaCol: -1},
                 {deltaRow: 0, deltaCol: 1}];  
@@ -266,11 +293,14 @@ module game {
     }
 
     // Helper Function: compute the hightest indication in specific cell
-    function computeIndication(row: number, col: number) {
+    function computeIndication(row: number, col: number): number {
         let result: number = 0;
-        for(let i = 0; i < boardDragged[row][col]; i++) {
-            
+        for (let key of boardDragged[row][col].keys()) {
+            if(key > result) {
+                key = result;
+            }
         }
+        return result;
     }
 
     // Helper Function: to get the HTMLElement of draggingPiece's neighbors
@@ -381,7 +411,7 @@ module game {
         let msg = "Dragged piece " + from.row + "x" + from.col + " to square " + to.row + "x" + to.col;
         log.info(msg);
 
-        if (from.isVertical) {
+        if (isVertical) {
             // Piece is vertical 
             if (dest === "PREPARED") {
                 // from board to prepared area
