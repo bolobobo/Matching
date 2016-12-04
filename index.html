@@ -38,8 +38,10 @@
 
             </div>
         </div>
-            <!--the 8 * 8 game grid-->
+        
+        
         <div id="boardArea" style="position: absolute; top: 10%; width: 90%; height: 80%; margin-left: 5%" >
+            <!--the 8 * 8 game grid-->
             <div style="position: absolute; top: 0; width: 100%; height: 90%;">
                 <div ng-repeat="row in [0, 1, 2, 3, 4, 5, 6, 7]" 
                 style="position:absolute; top:{{row * 12.5}}%; left:0; width:100%; height:12.5%;">
@@ -48,29 +50,25 @@
                         class = "gameBox"
                         ng-click="game.cellClicked(row, col, color)"      
                         id="{{'e2e_test_div_' + row + 'x' + col}}">
+                        <!--the original board with the initial color at beginning-->
                         <div style="position:absolute; width:100%; height:100%;"
                             ng-class="{slowlyAppear: game.shouldSlowlyAppear(row, col)}"
-                            class = "{{game.getBoardBoxColor(row,col)}}">
+                            class = "{{game.getBoardBoxColor(row,col)}}"
+                            id="MyPieceBoardOriginal{{row}}x{{col}}">
+                            <!--the first layer-->
                             <div style="position:absolute; width:100%; height:100%;"
                                 id="MyPieceBoard_1_Layer{{row}}x{{col}}"> 
+                                <!--the second layer-->
                                 <div style="position:absolute; width:100%; height:100%;"
                                     id="MyPieceBoard_2_Layer{{row}}x{{col}}"> 
+                                    <!--the third layer-->
                                     <div style="position:absolute; width:100%; height:100%;"
-                                    id="MyPieceBoard_2_Layer{{row}}x{{col}}"> 
+                                        id="MyPieceBoard_3_Layer{{row}}x{{col}}"> 
+                                        
+
                                     </div>
                                 </div>
                             </div>
-                            <!--<svg width="100%"  height="100%"
-                                style="position:absolute;"
-                                
-                                ng-if="game.shouldShowImage(row, col)"
-                                id="{{'e2e_test_pieceB_' + row + 'x' + col}}"
-                                id="MyPieceBoardOriginal{{row}}x{{col}}"
-                                id="MyPieceBoard_1_Layer{{row}}x{{col}}"
-                                id="MyPieceBoard_2_Layer{{row}}x{{col}}"
-                                id="MyPieceBoard_3_Layer{{row}}x{{col}}">
-                                <rect rx="10%" ry="10%" width="90%" height="90%" stroke="grey" stroke-width="1.5px" fill="{{game.getBoardBoxColor(row, col)}}" />                            
-                            </svg> -->
                         </div>
                     </div>
                 </div>
