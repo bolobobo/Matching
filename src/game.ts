@@ -109,21 +109,25 @@ module game {
                 // do not need to shrink the size of the cell
                 setDraggingPieceGroupTopLeft({top: y - boardSquareSize.height / 2, left: x - boardSquareSize.width / 2}, needToShrink, draggingStartedRowCol.isInBoard);
             }
-        } else {
-            // the first touch in the board but not in the prepared area
-            if (!draggingPiece && y < boardArea.clientWidth + boardArea.clientWidth*0.0375) {
-                // TODO: START FROM BOARD
+        } else if (y < boardArea.clientWidth + boardArea.clientWidth*0.0375) {
+                // the touch in the board area but not in the prepared area
+                // Position: Inside board box area. Let's find the containing square's row and col
                 let row = Math.floor(rowsNum * y / boardArea.clientWidth);
                 let col = Math.floor(colsNum * x / boardArea.clientWidth);
                 log.info("this is in Board area: row is " + row + " col is " + col);
+
                 if (type === "touchstart" && !draggingStartedRowCol) {
                     // drag started in board
                     log.info("drag start AT BOARD.");
-                    draggingStartedRowCol = {row: row, col: col, isInBoard: false, isVertical: false, indication: -1};
+                    if (boardDragged[row][col].length === 1) {
+                        // no piece be moved in this cell
+                        return;
+                    }
+                    draggingStartedRowCol = {row: row, col: col, isInBoard: true, isVertical: false, indication: -1};
+                    computeBlockDeltas(draggingStartedRowCol, draggingStartedRowCol.isInBoard);
                 }
-                return;
-            }
-            if (draggingPiece && y < boardArea.clientWidth + boardArea.clientWidth*0.0375) {
+
+
                 //TODO: FROM BOARD TO BOARD AND FROM BOARD TO PREPARED
                 // MOVE FROM EVERYWHERE
                 // 1: the drag in the board part
@@ -135,34 +139,33 @@ module game {
 
                 // drag ended
 
-
-            } else {
-                // Position: Inside prepared box area. Let's find the containing square's row and col
-                let col = Math.floor(colsBox * x / boardArea.clientWidth) % rowsBox;
-                let row = Math.floor(rowsBox * x / boardArea.clientWidth);
-                
-                if (type === "touchstart" && !draggingStartedRowCol) {
-                    // drag started in prepared area
-                    log.info("drag start AT PREPARED.");
-                    draggingStartedRowCol = {row: row, col: col, isInBoard: false, isVertical: false, indication: -1};
-                    computeBlockDeltas(draggingStartedRowCol, draggingStartedRowCol.isInBoard);
-                    createDraggingPieceGroup(draggingStartedRowCol);
-                    setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(row, col), needToShrink, draggingStartedRowCol.isInBoard);
-                }
-                if (!draggingPiece) {
-                    return;
-                }
-
-                if (type === "touchend") {
-                    let from = draggingStartedRowCol;
-                    let to = {row: row, col: col};
-                    dragDone(from, to, "PREPARED");
-                } else {
-                    // Drag continue
-                    setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(row, col), false, draggingStartedRowCol.isInBoard);
-                } 
+        } else {
+            // Position: Inside prepared box area. Let's find the containing square's row and col
+            let col = Math.floor(colsBox * x / boardArea.clientWidth) % rowsBox;
+            let row = Math.floor(rowsBox * x / boardArea.clientWidth);
+            
+            if (type === "touchstart" && !draggingStartedRowCol) {
+                // drag started in prepared area
+                log.info("drag start AT PREPARED.");
+                computeIndication(row, col);
+                draggingStartedRowCol = {row: row, col: col, isInBoard: false, isVertical: false, indication: -1};
+                computeBlockDeltas(draggingStartedRowCol, draggingStartedRowCol.isInBoard);
+                createDraggingPieceGroup(draggingStartedRowCol);
+                setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(row, col), needToShrink, draggingStartedRowCol.isInBoard);
             }
-        } 
+            if (!draggingPiece) {
+                return;
+            }
+
+            if (type === "touchend") {
+                let from = draggingStartedRowCol;
+                let to = {row: row, col: col};
+                dragDone(from, to, "PREPARED");
+            } else {
+                // Drag continue
+                setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(row, col), false, draggingStartedRowCol.isInBoard);
+            } 
+        }
 
         // If the drag is outside the legal board, it should return to the original position
         if (type === "touchend" || type === "touchcancel" || type === "touchleave") {
@@ -262,6 +265,13 @@ module game {
         }   
     }
 
+    // Helper Function: compute the hightest indication in specific cell
+    function computeIndication(row: number, col: number) {
+        let result: number = 0;
+        for(let i = 0; i < boardDragged[row][col]; i++) {
+            
+        }
+    }
 
     // Helper Function: to get the HTMLElement of draggingPiece's neighbors
     function createDraggingPieceGroup(draggingStartedRowCol: any) {
