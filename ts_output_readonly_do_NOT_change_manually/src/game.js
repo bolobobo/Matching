@@ -177,10 +177,22 @@ var game;
         for (var i = 0; i < game.boardDragged.length; i++) {
             for (var j = 0; j < game.boardDragged[i].length; j++) {
                 var length_1 = computeLength(i, j);
+                clearOriginBoardCell(i, j);
+                var layers = findLayer(i, j, length_1);
                 if (length_1 === 0) {
                 }
-                else if (length_1 === 1)
-                    ;
+                else if (length_1 === 1) {
+                    game.boardLayer1[i][j] = game.boardDragged[i][j][layers.layer1];
+                }
+                else if (length_1 === 2) {
+                    game.boardLayer1[i][j] = game.boardDragged[i][j][layers.layer1];
+                    game.boardLayer2[i][j] = game.boardDragged[i][j][layers.layer2];
+                }
+                else if (length_1 === 3) {
+                    game.boardLayer1[i][j] = game.boardDragged[i][j][layers.layer1];
+                    game.boardLayer2[i][j] = game.boardDragged[i][j][layers.layer2];
+                    game.boardLayer3[i][j] = game.boardDragged[i][j][layers.layer3];
+                }
             }
         }
     }
@@ -192,9 +204,41 @@ var game;
         return length;
     }
     function clearOriginBoardCell(row, col) {
-        for (var i = 1; i < 4; i++) {
-            var html = document.getElementById("MyPieceBoard_" + i + "_Layer" + row + "x" + col);
+        game.boardLayer1[row][col] = '';
+        game.boardLayer2[row][col] = '';
+        game.boardLayer3[row][col] = '';
+    }
+    function findLayer(row, col, length) {
+        var bottom = -1;
+        var middle = -1;
+        var up = -1;
+        for (var key in game.boardDragged[row][col]) {
+            if (parseInt(key) > up) {
+                var temp1 = up;
+                var temp2 = middle;
+                up = parseInt(key);
+                middle = temp1;
+                bottom = temp2;
+            }
+            else if (parseInt(key) > middle) {
+                var temp1 = middle;
+                middle = parseInt(key);
+                bottom = temp1;
+            }
+            else {
+                bottom = parseInt(key);
+            }
         }
+        // settle the layer
+        if (length === 1) {
+            bottom = up;
+            up = -1;
+        }
+        else if (length === 2) {
+            bottom = middle;
+            middle = up;
+        }
+        return { layer1: bottom, layer2: middle, layer3: up };
     }
     // Helper Function: to find the neighbor cells related to the finger-pointed cell
     function computeBlockDeltas(draggingStartedRowCol, isInBoard) {
@@ -241,55 +285,55 @@ var game;
         var col = draggingStartedRowCol.col + 2;
         var ind = draggingStartedRowCol.indication;
         //let value = boardDragged[row][col][ind];
-        if (tempBoardDragged[row - 1][col].has(ind)) {
+        if (tempBoardDragged[row - 1][col].hasOwnProperty(ind)) {
             // up 
-            if (tempBoardDragged[row - 2][col].has(ind)) {
+            if (tempBoardDragged[row - 2][col].hasOwnProperty(ind)) {
                 game.blockDeltas = [
                     { deltaRow: -1, deltaCol: 0 },
                     { deltaRow: -2, deltaCol: 0 }];
             }
-            else if (tempBoardDragged[row + 1][col].has(ind)) {
+            else if (tempBoardDragged[row + 1][col].hasOwnProperty(ind)) {
                 game.blockDeltas = [
                     { deltaRow: -1, deltaCol: 0 },
                     { deltaRow: 1, deltaCol: 0 }];
             }
             game.isVertical = true;
         }
-        else if (tempBoardDragged[row + 1][col].has(ind)) {
+        else if (tempBoardDragged[row + 1][col].hasOwnProperty(ind)) {
             // down
-            if (tempBoardDragged[row + 2][col].has(ind)) {
+            if (tempBoardDragged[row + 2][col].hasOwnProperty(ind)) {
                 game.blockDeltas = [
                     { deltaRow: 1, deltaCol: 0 },
                     { deltaRow: 2, deltaCol: 0 }];
             }
-            else if (tempBoardDragged[row - 1][col].has(ind)) {
+            else if (tempBoardDragged[row - 1][col].hasOwnProperty(ind)) {
                 game.blockDeltas = [
                     { deltaRow: -1, deltaCol: 0 },
                     { deltaRow: 1, deltaCol: 0 }];
             }
             game.isVertical = true;
         }
-        else if (tempBoardDragged[row][col - 1].has(ind)) {
+        else if (tempBoardDragged[row][col - 1].hasOwnProperty(ind)) {
             // left
-            if (tempBoardDragged[row][col - 2].has(ind)) {
+            if (tempBoardDragged[row][col - 2].hasOwnProperty(ind)) {
                 game.blockDeltas = [
                     { deltaRow: 0, deltaCol: -1 },
                     { deltaRow: 0, deltaCol: -2 }];
             }
-            else if (tempBoardDragged[row][col + 1].has(ind)) {
+            else if (tempBoardDragged[row][col + 1].hasOwnProperty(ind)) {
                 game.blockDeltas = [
                     { deltaRow: 0, deltaCol: -1 },
                     { deltaRow: 0, deltaCol: 1 }];
             }
         }
-        else if (tempBoardDragged[row][col + 1].has(ind)) {
+        else if (tempBoardDragged[row][col + 1].hasOwnProperty(ind)) {
             //right
-            if (tempBoardDragged[row][col + 2].has(ind)) {
+            if (tempBoardDragged[row][col + 2].hasOwnProperty(ind)) {
                 game.blockDeltas = [
                     { deltaRow: 0, deltaCol: 1 },
                     { deltaRow: 0, deltaCol: 2 }];
             }
-            else if (tempBoardDragged[row][col - 1].has(ind)) {
+            else if (tempBoardDragged[row][col - 1].hasOwnProperty(ind)) {
                 game.blockDeltas = [
                     { deltaRow: 0, deltaCol: -1 },
                     { deltaRow: 0, deltaCol: 1 }];
@@ -761,5 +805,6 @@ angular.module('myApp', ['gameServices'])
 //TODO to compute the pass
 //TODO translation initialize
 // optimize compute delta in board
-// optimize map datastructure by length in each cell {length: 1} 
+// optimize map datastructure by length in each cell {length: 1}
+// clear board cell in original place 
 //# sourceMappingURL=game.js.map
