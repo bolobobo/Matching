@@ -22,6 +22,7 @@ var game;
     game.draggingPieceGroup = [];
     game.boardDragged = []; // to record which box has been moved to the board
     game.needToShrink = false; // At begginning, do not need to Shrink
+    game.needToSettle = false;
     game.isVertical = false; // denote the shape of the draggingPieceGroup 
     game.boardLayer1 = [];
     game.boardLayer2 = [];
@@ -156,12 +157,15 @@ var game;
             // return the piece to it's original style (then angular will take care to hide it).
             if (!game.draggingStartedRowCol.isInBoard) {
                 game.needToShrink = true;
+                game.needToSettle = true;
                 setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col), game.draggingStartedRowCol.isInBoard);
                 setDraggingPieceGroupStyle();
             }
             else {
                 game.needToShrink = false;
+                game.needToSettle = true;
                 setDraggingPieceGroupTopLeft(getSquareTopLeft(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col), game.draggingStartedRowCol.isInBoard);
+                setDraggingPieceGroupStyle();
             }
             changeUIForEachMove();
             // clear the draggingPiece every time when ended
@@ -171,6 +175,7 @@ var game;
             game.blockDeltas = [];
             game.needToShrink = false;
             game.isVertical = false;
+            game.needToSettle = false;
         }
     }
     function changeUIForEachMove() {
@@ -420,7 +425,12 @@ var game;
             size = getSquareWidthHeight_Box();
             game.draggingPiece.style['width'] = size.width;
             game.draggingPiece.style['height'] = size.height;
-            game.draggingPiece.style['z-index'] = 100;
+            if (game.needToSettle) {
+                game.draggingPiece.style['z-index'] = -1;
+            }
+            else {
+                game.draggingPiece.style['z-index'] = 100;
+            }
         }
         else {
             size = getSquareWidthHeight();
@@ -428,7 +438,12 @@ var game;
         for (var i = 0; i < game.draggingPieceGroup.length; i++) {
             game.draggingPieceGroup[i].style['width'] = size.width;
             game.draggingPieceGroup[i].style['height'] = size.height;
-            game.draggingPieceGroup[i].style['z-index'] = 100;
+            if (game.needToSettle) {
+                game.draggingPieceGroup[i].style['z-index'] = -1;
+            }
+            else {
+                game.draggingPieceGroup[i].style['z-index'] = 100;
+            }
         }
     }
     // Helper Function: set the top left of the draggingPiece group

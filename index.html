@@ -57,17 +57,17 @@
                             id="MyPieceBoardOriginal{{row}}x{{col}}">
                             <!--the first layer-->
                             <!--<div style="position:absolute; width:100%; height:100%;"> -->
-                                <svg style="position:absolute; width:100%; height:100%;z-index:70;"
+                                <svg style="position:absolute; width:96%; height:96%; top:2%; margin-left:2%"
                                     id="MyPieceBoard_1_Layer{{row}}x{{col}}"
                                     class="{{game.boardLayer1[row][col]}}">
                                     <!--the second layer-->
                                     <div style="position:absolute; width:100%; height:100%;"> 
-                                        <svg style="position:absolute; width:100%; height:100%; z-index:80"
+                                        <svg style="position:absolute; width:100%; height:100%;"
                                             id="MyPieceBoard_2_Layer{{row}}x{{col}}"
                                             class="{{game.getBoardColorAt_2_Layer(row, col)}}">
                                             <!--the third layer-->
                                             <div style="position:absolute; width:100%; height:100%;"> 
-                                                <svg style="position:absolute; width:100%; height:100%; z-index:90"
+                                                <svg style="position:absolute; width:100%; height:100%;"
                                                     id="MyPieceBoard_3_Layer{{row}}x{{col}}"
                                                     class="{{game.getBoardColorAt_3_Layer(row, col)}}">
 

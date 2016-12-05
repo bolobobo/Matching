@@ -48,6 +48,7 @@ module game {
     export let boardDragged: any = []; // to record which box has been moved to the board
     export let indication: number; // to indicate the cells in the same box when they are moved to board
     export let needToShrink: boolean = false; // At begginning, do not need to Shrink
+    export let needToSettle: boolean = false;
     export let isVertical: boolean = false; // denote the shape of the draggingPieceGroup 
     export let boardLayer1: string[][] = [];
     export let boardLayer2: string[][] = [];
@@ -189,13 +190,16 @@ module game {
             // return the piece to it's original style (then angular will take care to hide it).
             if (!draggingStartedRowCol.isInBoard) {
                 needToShrink = true;
+                needToSettle = true;
                 setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(draggingStartedRowCol.row, draggingStartedRowCol.col), 
                 draggingStartedRowCol.isInBoard);
                 setDraggingPieceGroupStyle();
             } else {
                 needToShrink = false;
+                needToSettle = true;
                 setDraggingPieceGroupTopLeft(getSquareTopLeft(draggingStartedRowCol.row, draggingStartedRowCol.col), 
                 draggingStartedRowCol.isInBoard);
+                setDraggingPieceGroupStyle();
                 
             }
             changeUIForEachMove();
@@ -207,6 +211,7 @@ module game {
             blockDeltas = [];
             needToShrink = false;
             isVertical = false;
+            needToSettle = false;
 
             // BOLOBOBO
             // for(let i = 0; i < boardDragged.length; i++) {
@@ -493,7 +498,11 @@ module game {
             size = getSquareWidthHeight_Box();
             draggingPiece.style['width'] = size.width;
             draggingPiece.style['height'] = size.height;
-            draggingPiece.style['z-index'] = 100;
+            if(needToSettle) {
+                draggingPiece.style['z-index'] = -1;
+            } else {
+                draggingPiece.style['z-index'] = 100;
+            } 
         } else {
             size = getSquareWidthHeight();
         }
@@ -501,7 +510,12 @@ module game {
         for (let i = 0; i < draggingPieceGroup.length; i++) {
             draggingPieceGroup[i].style['width'] = size.width;
             draggingPieceGroup[i].style['height'] = size.height;
-            draggingPieceGroup[i].style['z-index'] = 100;
+            if(needToSettle) {
+                draggingPieceGroup[i].style['z-index'] = -1;
+            } else {
+                draggingPieceGroup[i].style['z-index'] = 100;
+            } 
+            //draggingPieceGroup[i].style['z-index'] = 100;
             //draggingPieceGroup[i].style.background = 'grey';
         }
     }
