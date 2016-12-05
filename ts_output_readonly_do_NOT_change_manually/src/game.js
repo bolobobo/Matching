@@ -171,72 +171,33 @@ var game;
             game.blockDeltas = [];
             game.needToShrink = false;
             game.isVertical = false;
-            //TOTEST: print the boardDragged value
-            // for(let i = 0; i < boardDragged.length; i++) {
-            //     log.info("this is line " + i + "=======================");
-            //     for(let j = 0; j < boardDragged[i].length; j++) {
-            //         log.info("row: " + i + " col: " + j + " value :" + angular.toJson(boardDragged[i][j], true));
-            //     } 
-            // }
-            log.info("this is layer1111111111111111111111111111111");
-            for (var i = 0; i < game.boardLayer1.length; i++) {
-                log.info("this is line " + i + "=======================");
-                for (var j = 0; j < game.boardLayer1[i].length; j++) {
-                    log.info("row: " + i + " col: " + j + " value :" + game.boardLayer1[i][j]);
-                }
-            }
-            log.info("this is layer2222222222222222222222222222222");
-            for (var i = 0; i < game.boardLayer2.length; i++) {
-                log.info("this is line " + i + "=======================");
-                for (var j = 0; j < game.boardLayer2[i].length; j++) {
-                    log.info("row: " + i + " col: " + j + " value :" + game.boardLayer2[i][j]);
-                }
-            }
-            log.info("this is layer3333333333333333333333333333333");
-            for (var i = 0; i < game.boardLayer3.length; i++) {
-                log.info("this is line " + i + "=======================");
-                for (var j = 0; j < game.boardLayer3[i].length; j++) {
-                    log.info("row: " + i + " col: " + j + " value :" + game.boardLayer3[i][j]);
-                }
-            }
         }
     }
     function changeUIForEachMove() {
         var count = 0;
         getInitialAllBoardLayer();
         for (var i = 0; i < game.boardDragged.length; i++) {
-            //log.info("this is line " + i + "**************");
-            for (var j = 0; j < 7; j++) {
+            for (var j = 0; j < game.boardDragged[i].length; j++) {
                 var length_1 = computeLength(i, j);
-                //log.info("length is " + length + "-------------------");
                 //clearOriginBoardCell(i, j);
                 var layers = findLayer(i, j);
                 if (length_1 === 0) {
                 }
                 else if (length_1 === 1) {
                     game.boardLayer1[i][j] = game.boardDragged[i][j][layers.layer1];
-                    //$timeout(function () {boardLayer1[i][j] = boardDragged[i][j][layers.layer1];}, 100);
-                    count++;
                 }
                 else if (length_1 === 2) {
                     game.boardLayer1[i][j] = game.boardDragged[i][j][layers.layer1];
                     game.boardLayer2[i][j] = game.boardDragged[i][j][layers.layer2];
-                    //$timeout(function () {boardLayer1[i][j] = boardDragged[i][j][layers.layer1];}, 1000);
-                    //$timeout(function () {boardLayer2[i][j] = boardDragged[i][j][layers.layer2];}, 1000);
-                    count++;
                 }
                 else if (length_1 === 3) {
                     game.boardLayer1[i][j] = game.boardDragged[i][j][layers.layer1];
                     game.boardLayer2[i][j] = game.boardDragged[i][j][layers.layer2];
                     game.boardLayer3[i][j] = game.boardDragged[i][j][layers.layer3];
-                    count++;
-                }
-                if (count === 3) {
-                    $timeout(function () { }, 100);
                 }
             }
         }
-        //$timeout(function () {}, 1000);
+        $timeout(function () { }, 100);
     }
     function computeLength(row, col) {
         var length = 0;
@@ -251,7 +212,6 @@ var game;
         game.boardLayer3[row][col] = '';
     }
     function findLayer(row, col) {
-        //log.info("this is findLayer function");
         var bottom = -1;
         var middle = -1;
         var up = -1;
@@ -274,7 +234,6 @@ var game;
             }
             length++;
         }
-        //log.info("the length is " + length + "-------------");
         // settle the layer
         if (length === 1) {
             bottom = up;
@@ -684,11 +643,9 @@ var game;
             var r_neighbor = row + delta.deltaRow;
             var c_neighbor = col + delta.deltaCol;
             if (r_neighbor < 0 || r_neighbor >= game.rowsNum || c_neighbor < 0 || c_neighbor >= game.colsNum) {
-                log.info("this is outside the board******************");
                 return false;
             }
         }
-        log.info("this is inside the board******************");
         return true;
     }
     //------------------------------------------------------------------------------------------------

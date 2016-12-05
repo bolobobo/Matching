@@ -207,34 +207,35 @@ module game {
             blockDeltas = [];
             needToShrink = false;
             isVertical = false;
-            //TOTEST: print the boardDragged value
+
+            // BOLOBOBO
             // for(let i = 0; i < boardDragged.length; i++) {
             //     log.info("this is line " + i + "=======================");
             //     for(let j = 0; j < boardDragged[i].length; j++) {
             //         log.info("row: " + i + " col: " + j + " value :" + angular.toJson(boardDragged[i][j], true));
             //     } 
             // }
-            log.info("this is layer1111111111111111111111111111111")
-            for(let i = 0; i < boardLayer1.length; i++) {
-                log.info("this is line " + i + "=======================");
-                for(let j = 0; j < boardLayer1[i].length; j++) {
-                    log.info("row: " + i + " col: " + j + " value :" + boardLayer1[i][j]);
-                } 
-            }
-            log.info("this is layer2222222222222222222222222222222")
-            for(let i = 0; i < boardLayer2.length; i++) {
-                log.info("this is line " + i + "=======================");
-                for(let j = 0; j < boardLayer2[i].length; j++) {
-                    log.info("row: " + i + " col: " + j + " value :" + boardLayer2[i][j]);
-                } 
-            }
-            log.info("this is layer3333333333333333333333333333333")
-            for(let i = 0; i < boardLayer3.length; i++) {
-                log.info("this is line " + i + "=======================");
-                for(let j = 0; j < boardLayer3[i].length; j++) {
-                    log.info("row: " + i + " col: " + j + " value :" + boardLayer3[i][j]);
-                } 
-            }
+            // log.info("this is layer1111111111111111111111111111111")
+            // for(let i = 0; i < boardLayer1.length; i++) {
+            //     log.info("this is line " + i + "=======================");
+            //     for(let j = 0; j < boardLayer1[i].length; j++) {
+            //         log.info("row: " + i + " col: " + j + " value :" + boardLayer1[i][j]);
+            //     } 
+            // }
+            // log.info("this is layer2222222222222222222222222222222")
+            // for(let i = 0; i < boardLayer2.length; i++) {
+            //     log.info("this is line " + i + "=======================");
+            //     for(let j = 0; j < boardLayer2[i].length; j++) {
+            //         log.info("row: " + i + " col: " + j + " value :" + boardLayer2[i][j]);
+            //     } 
+            // }
+            // log.info("this is layer3333333333333333333333333333333")
+            // for(let i = 0; i < boardLayer3.length; i++) {
+            //     log.info("this is line " + i + "=======================");
+            //     for(let j = 0; j < boardLayer3[i].length; j++) {
+            //         log.info("row: " + i + " col: " + j + " value :" + boardLayer3[i][j]);
+            //     } 
+            // }
 
             // TOTEST: print the color in preparedBox
             // for(let i = 0; i < 3; i++) {
@@ -249,38 +250,27 @@ module game {
         let count = 0;
         getInitialAllBoardLayer();
         for(let i = 0; i < boardDragged.length; i++) {
-            //log.info("this is line " + i + "**************");
-            for(let j = 0; j < 7; j++) {
-                let length = computeLength(i, j);
-                //log.info("length is " + length + "-------------------");
+            for(let j = 0; j < boardDragged[i].length; j++) {
+                let length = computeLength(i, j); 
                 //clearOriginBoardCell(i, j);
                 let layers = findLayer(i, j);
-
                 if (length === 0) {
                     // just clear the origin layers
                 } else if (length === 1) {
                     boardLayer1[i][j] = boardDragged[i][j][layers.layer1];
-                    //$timeout(function () {boardLayer1[i][j] = boardDragged[i][j][layers.layer1];}, 100);
-                    count++;
+                    
                 } else if (length === 2) {
                     boardLayer1[i][j] = boardDragged[i][j][layers.layer1];
                     boardLayer2[i][j] = boardDragged[i][j][layers.layer2];
-                    //$timeout(function () {boardLayer1[i][j] = boardDragged[i][j][layers.layer1];}, 1000);
-                    //$timeout(function () {boardLayer2[i][j] = boardDragged[i][j][layers.layer2];}, 1000);
-                    count++;
                 } else if (length === 3) {
                     boardLayer1[i][j] = boardDragged[i][j][layers.layer1];
                     boardLayer2[i][j] = boardDragged[i][j][layers.layer2];
                     boardLayer3[i][j] = boardDragged[i][j][layers.layer3];
-                    count++;
-                }
-                if(count === 3) {
-                    $timeout(function () {}, 100);
                 }
             }
             
         }
-        //$timeout(function () {}, 1000);
+        $timeout(function () {}, 100);
     }
 
     function computeLength(row: number, col: number): number {
@@ -298,7 +288,6 @@ module game {
     }
 
     function findLayer(row: number, col: number): any {
-        //log.info("this is findLayer function");
         let bottom: number = -1;
         let middle: number = -1;
         let up: number = -1;
@@ -319,7 +308,6 @@ module game {
             }
             length++;
         }
-        //log.info("the length is " + length + "-------------");
         // settle the layer
         if (length === 1) {
             bottom = up;
@@ -741,12 +729,10 @@ module game {
           let delta = blockDeltas[i];
           let r_neighbor = row + delta.deltaRow;
           let c_neighbor = col + delta.deltaCol;
-          if (r_neighbor < 0 || r_neighbor >= rowsNum || c_neighbor < 0 || c_neighbor >= colsNum) {
-            log.info("this is outside the board******************");
+          if (r_neighbor < 0 || r_neighbor >= rowsNum || c_neighbor < 0 || c_neighbor >= colsNum) {  
             return false;
           }
         }
-        log.info("this is inside the board******************");
         return true;
     }
 
