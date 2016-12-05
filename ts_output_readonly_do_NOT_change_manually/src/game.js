@@ -110,7 +110,7 @@ var game;
             if (type === "touchend") {
                 var from = game.draggingStartedRowCol;
                 var to = { row: row, col: col };
-                dragDone(from, to, "PREPARED");
+                dragDone(from, to, "BOARD");
             }
             else {
                 // Drag continue
@@ -124,6 +124,10 @@ var game;
             if (type === "touchstart" && !game.draggingStartedRowCol) {
                 // drag started in prepared area
                 log.info("drag start AT PREPARED.");
+                // if (state.preparedBox[row][col] === '') {
+                //     // no color in prepared area
+                //     return;
+                // }
                 game.draggingStartedRowCol = { row: row, col: col, isInBoard: false, indication: -1, layer: -1 };
                 computeBlockDeltas(game.draggingStartedRowCol, game.draggingStartedRowCol.isInBoard);
                 createDraggingPieceGroup(game.draggingStartedRowCol);
@@ -443,7 +447,7 @@ var game;
             }
             for (var i = 0; i < game.blockDeltas.length; i++) {
                 var oldRow = from.row + game.blockDeltas[i].deltaRow;
-                var oldCol = from.row + game.blockDeltas[i].deltaCol;
+                var oldCol = from.col + game.blockDeltas[i].deltaCol;
                 var color = void 0;
                 if (from.isInBoard) {
                     color = game.boardDragged[oldRow][oldCol][from.indication];
@@ -471,18 +475,22 @@ var game;
         game.boardDragged[from.row][from.col].delete(from.indication);
         for (var i = 0; i < game.blockDeltas.length; i++) {
             var oldRow = from.row + game.blockDeltas[i].deltaRow;
-            var oldCol = from.row + game.blockDeltas[i].deltaCol;
+            var oldCol = from.col + game.blockDeltas[i].deltaCol;
             // clear the color in the original place
             game.boardDragged[oldRow][oldCol].delete(from.indication);
         }
     }
     function clearOriginalPieceInPrepared(from) {
         game.state.preparedBox[from.row][from.col] = '';
-        for (var i = 0; i < game.blockDeltas.length; i++) {
+        var _loop_1 = function(i) {
             var oldRow = from.row + game.blockDeltas[i].deltaRow;
-            var oldCol = from.row + game.blockDeltas[i].deltaCol;
+            var oldCol = from.col + game.blockDeltas[i].deltaCol;
             // clear the color in the original place
-            game.state.preparedBox[oldRow][oldCol] = '';
+            //$timeout(function() {getPreparedBoxColor(oldRow, oldCol);},100);
+            $timeout(function () { game.state.preparedBox[oldRow][oldCol] = ''; }, 100);
+        };
+        for (var i = 0; i < game.blockDeltas.length; i++) {
+            _loop_1(i);
         }
     }
     // Helper Function: initialize the boardDragged
@@ -639,9 +647,9 @@ var game;
     //     return state.board[row][col] === 'Y';
     // }  
     function shouldShowImage_Box(row, col) {
-        var cell = game.state.board[row][col];
+        var cell = game.state.preparedBox[row][col];
         //log.info("this is the cell, row: " + row + " col: " + col + " color: " + state.preparedBox[row][col]);
-        return true;
+        return cell !== '';
     }
     game.shouldShowImage_Box = shouldShowImage_Box;
     // export function isPieceR_Box(row: number, col: number): boolean {
@@ -680,6 +688,9 @@ var game;
         }
         else if (color === 'Y') {
             return "rgb(246, 246, 85)";
+        }
+        else {
+            return "grey";
         }
     }
     game.getPreparedBoxColor = getPreparedBoxColor;

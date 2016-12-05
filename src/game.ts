@@ -141,7 +141,7 @@ module game {
                 if (type === "touchend") {
                     let from = draggingStartedRowCol;
                     let to = {row: row, col: col};
-                    dragDone(from, to, "PREPARED");
+                    dragDone(from, to, "BOARD");
                 } else {
                     // Drag continue
                     setDraggingPieceGroupTopLeft(getSquareTopLeft(row, col), draggingStartedRowCol.isInBoard);
@@ -157,6 +157,10 @@ module game {
             if (type === "touchstart" && !draggingStartedRowCol) {
                 // drag started in prepared area
                 log.info("drag start AT PREPARED.");
+                // if (state.preparedBox[row][col] === '') {
+                //     // no color in prepared area
+                //     return;
+                // }
                 
                 draggingStartedRowCol = {row: row, col: col, isInBoard: false, indication: -1, layer: -1};
                 computeBlockDeltas(draggingStartedRowCol, draggingStartedRowCol.isInBoard);
@@ -199,6 +203,13 @@ module game {
             blockDeltas = [];
             needToShrink = false;
             isVertical = false;
+            // TOTEST: print the boardDragged value
+            // for(let i = 0; i < boardDragged.length; i++) {
+            //     log.info("this is line " + i + "=======================");
+            //     for(let j = 0; j < boardDragged[i].length; j++) {
+            //         log.info("row: " + i + " col: " + j + " value :" + angular.toJson(boardDragged[i][j], true));
+            //     } 
+            // }
         }  
     }
 
@@ -488,7 +499,7 @@ module game {
             
             for (let i = 0; i < blockDeltas.length; i++) {
                 let oldRow = from.row + blockDeltas[i].deltaRow;
-                let oldCol = from.row + blockDeltas[i].deltaCol;
+                let oldCol = from.col + blockDeltas[i].deltaCol;
                 let color: string;
 
                 if (from.isInBoard) {
@@ -517,7 +528,7 @@ module game {
         boardDragged[from.row][from.col].delete(from.indication);
         for (let i = 0; i < blockDeltas.length; i++) {
             let oldRow = from.row + blockDeltas[i].deltaRow;
-            let oldCol = from.row + blockDeltas[i].deltaCol;
+            let oldCol = from.col + blockDeltas[i].deltaCol;
             // clear the color in the original place
             boardDragged[oldRow][oldCol].delete(from.indication);
         }
@@ -527,9 +538,11 @@ module game {
         state.preparedBox[from.row][from.col] = '';
         for (let i = 0; i < blockDeltas.length; i++) {
             let oldRow = from.row + blockDeltas[i].deltaRow;
-            let oldCol = from.row + blockDeltas[i].deltaCol;
+            let oldCol = from.col + blockDeltas[i].deltaCol;
             // clear the color in the original place
-            state.preparedBox[oldRow][oldCol] = '';
+            //$timeout(function() {getPreparedBoxColor(oldRow, oldCol);},100);
+            $timeout(function () {state.preparedBox[oldRow][oldCol] = '';}, 100);
+            //state.preparedBox[oldRow][oldCol] = '';
         }
     }
 
@@ -720,9 +733,9 @@ module game {
     // }  
 
     export function shouldShowImage_Box(row: number, col: number): boolean {
-        let cell = state.board[row][col];
+        let cell = state.preparedBox[row][col];
         //log.info("this is the cell, row: " + row + " col: " + col + " color: " + state.preparedBox[row][col]);
-        return true;
+        return cell !== '';
     }
     // export function isPieceR_Box(row: number, col: number): boolean {
     //     return state.preparedBox[row][col] === 'R';
@@ -760,6 +773,8 @@ module game {
             return "rgb(51, 204, 255)";
         } else if (color === 'Y') {
             return "rgb(246, 246, 85)";
+        } else {
+            return "grey";
         }
     }
 }

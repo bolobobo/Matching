@@ -113,8 +113,22 @@
                                     </div>
                                 </svg>
                             </div>-->
-                        <svg width="100%"  height="100%"
+                        <!--<svg width="100%"  height="100%"
                             style="position:absolute;"
+                            ng-class="{slowlyAppear: game.shouldSlowlyAppear(rowbox, colbox)}"
+                            ng-if="game.shouldShowImage_Box(rowbox, colbox)"
+                            id="MyPieceBox{{rowbox}}x{{colbox}}">
+                            <rect rx="10%" ry="10%" width="100%" height="100%" stroke="grey" stroke-width="0.5px" fill="{{game.getPreparedBoxColor(rowbox, colbox)}}" />                            
+                        </svg>-->
+                        <!--<svg width="100%"  height="100%"
+                            style="position:absolute; stroke-width="1.5px";stroke="grey";"
+                            ng-class="{slowlyAppear: game.shouldSlowlyAppear(rowbox, colbox)}"
+                            ng-if="game.shouldShowImage_Box(rowbox, colbox)"
+                            id="MyPieceBox{{rowbox}}x{{colbox}}"
+                            class="{{game.state.preparedBox[rowbox][colbox]}}">                          
+                        </svg>-->
+                        <svg width="100%"  height="100%"
+                            style="position:absolute; stroke-width="1.5px";stroke="grey";"
                             ng-class="{slowlyAppear: game.shouldSlowlyAppear(rowbox, colbox)}"
                             ng-if="game.shouldShowImage_Box(rowbox, colbox)"
                             id="MyPieceBox{{rowbox}}x{{colbox}}">
