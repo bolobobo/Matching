@@ -23,6 +23,9 @@ var game;
     game.boardDragged = []; // to record which box has been moved to the board
     game.needToShrink = false; // At begginning, do not need to Shrink
     game.isVertical = false; // denote the shape of the draggingPieceGroup 
+    game.boardLayer1 = [];
+    game.boardLayer2 = [];
+    game.boardLayer3 = [];
     /**
      * Register for the turnBasedService3.js file
      */
@@ -43,6 +46,7 @@ var game;
         game.boardArea = document.getElementById("boardArea");
         game.gamePrepare = document.getElementById("gamePrepare");
         getInitialBoardDragged(); // initialize the boardDragged
+        getInitialAllBoardLayer(); // initialize all the boardLayer to store the color of each layer in board
         getSquareWidthHeight();
         getSquareWidthHeight_Box();
         game.indication = 0;
@@ -159,7 +163,7 @@ var game;
                 game.needToShrink = false;
                 setDraggingPieceGroupTopLeft(getSquareTopLeft(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col), game.draggingStartedRowCol.isInBoard);
             }
-            //changeUIForEachMove();
+            changeUIForEachMove();
             // clear the draggingPiece every time when ended
             game.draggingStartedRowCol = null;
             game.draggingPiece = null;
@@ -169,17 +173,29 @@ var game;
             game.isVertical = false;
         }
     }
-    // function changeUIForEachMove() {
-    //     let ind: number = -1;
-    //     let layer: number = 0;
-    //     for (let key in boardDragged[row][col]) {
-    //         if(parseInt(key) > ind) {
-    //             ind = parseInt(key);
-    //         }
-    //         layer++;
-    //     }
-    //     return {ind: ind, layer: layer};
-    // }
+    function changeUIForEachMove() {
+        for (var i = 0; i < game.boardDragged.length; i++) {
+            for (var j = 0; j < game.boardDragged[i].length; j++) {
+                var length_1 = computeLength(i, j);
+                if (length_1 === 0) {
+                }
+                else if (length_1 === 1)
+                    ;
+            }
+        }
+    }
+    function computeLength(row, col) {
+        var length = 0;
+        for (var key in game.boardDragged[row][col]) {
+            length++;
+        }
+        return length;
+    }
+    function clearOriginBoardCell(row, col) {
+        for (var i = 1; i < 4; i++) {
+            var html = document.getElementById("MyPieceBoard_" + i + "_Layer" + row + "x" + col);
+        }
+    }
     // Helper Function: to find the neighbor cells related to the finger-pointed cell
     function computeBlockDeltas(draggingStartedRowCol, isInBoard) {
         if (!isInBoard) {
@@ -531,6 +547,18 @@ var game;
             width: game.boardArea.clientWidth * 0.9 / game.colsBox
         };
     }
+    function getInitialAllBoardLayer() {
+        for (var i = 0; i < gameLogic.ROWS; i++) {
+            game.boardLayer1[i] = [];
+            game.boardLayer2[i] = [];
+            game.boardLayer3[i] = [];
+            for (var j = 0; j < gameLogic.COLS; j++) {
+                game.boardLayer1[i][j] = '';
+                game.boardLayer2[i][j] = '';
+                game.boardLayer3[i][j] = '';
+            }
+        }
+    }
     // function getSquareCenterXY(row: number, col: number) {
     //     var size = getSquareWidthHeight();
     //     return {
@@ -707,6 +735,18 @@ var game;
         }
     }
     game.getPreparedBoxColor = getPreparedBoxColor;
+    function getBoardColorAt_1_Layer(row, col) {
+        return game.boardLayer1[row][col];
+    }
+    game.getBoardColorAt_1_Layer = getBoardColorAt_1_Layer;
+    function getBoardColorAt_2_Layer(row, col) {
+        return game.boardLayer2[row][col];
+    }
+    game.getBoardColorAt_2_Layer = getBoardColorAt_2_Layer;
+    function getBoardColorAt_3_Layer(row, col) {
+        return game.boardLayer3[row][col];
+    }
+    game.getBoardColorAt_3_Layer = getBoardColorAt_3_Layer;
 })(game || (game = {}));
 angular.module('myApp', ['gameServices'])
     .run(function () {
@@ -717,8 +757,9 @@ angular.module('myApp', ['gameServices'])
 // use enum to notate the right, left, top and down
 //TODO set draggin'S params CAN BE OPTIMIZED
 // map in the dragged board is a pit, delete may not work
-// TODO Z-INDEX need to do better
+// TODO Z-INDEX need to do better, RECOMPUTE
 //TODO to compute the pass
 //TODO translation initialize
-// optimize compute delta in board 
+// optimize compute delta in board
+// optimize map datastructure by length in each cell {length: 1} 
 //# sourceMappingURL=game.js.map

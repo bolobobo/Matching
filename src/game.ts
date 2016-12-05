@@ -49,7 +49,9 @@ module game {
     export let indication: number; // to indicate the cells in the same box when they are moved to board
     export let needToShrink: boolean = false; // At begginning, do not need to Shrink
     export let isVertical: boolean = false; // denote the shape of the draggingPieceGroup 
-    
+    export let boardLayer1: string[][] = [];
+    export let boardLayer2: string[][] = [];
+    export let boardLayer3: string[][] = [];
     /**
      * Register for the turnBasedService3.js file 
      */
@@ -71,6 +73,7 @@ module game {
         boardArea = document.getElementById("boardArea");
         gamePrepare = document.getElementById("gamePrepare");
         getInitialBoardDragged(); // initialize the boardDragged
+        getInitialAllBoardLayer(); // initialize all the boardLayer to store the color of each layer in board
         getSquareWidthHeight();
         getSquareWidthHeight_Box();
         indication = 0;
@@ -196,7 +199,7 @@ module game {
                 draggingStartedRowCol.isInBoard);
                 
             }
-            //changeUIForEachMove();
+            changeUIForEachMove();
             // clear the draggingPiece every time when ended
             
             draggingStartedRowCol = null;
@@ -221,17 +224,32 @@ module game {
         }  
     }
 
-    // function changeUIForEachMove() {
-    //     let ind: number = -1;
-    //     let layer: number = 0;
-    //     for (let key in boardDragged[row][col]) {
-    //         if(parseInt(key) > ind) {
-    //             ind = parseInt(key);
-    //         }
-    //         layer++;
-    //     }
-    //     return {ind: ind, layer: layer};
-    // }
+    function changeUIForEachMove() {
+        for(let i = 0; i < boardDragged.length; i++) {
+            for(let j = 0; j < boardDragged[i].length; j++) {
+                let length = computeLength(i, j);
+
+                if (length === 0) {
+                    // clear the origin layers
+                } else if (length === 1)
+            }
+        }
+    }
+
+    function computeLength(row: number, col: number): number {
+        let length: number = 0;
+        for (let key in boardDragged[row][col]) {
+            length++;
+        }
+        return length;
+    }
+
+    function clearOriginBoardCell(row: number, col: number) {
+        for(let i = 1; i < 4; i++) {
+            let html: any = document.getElementById("MyPieceBoard_" + i + "_Layer" + row + "x" + col);
+            
+        }
+    }
 
     // Helper Function: to find the neighbor cells related to the finger-pointed cell
     function computeBlockDeltas(draggingStartedRowCol: any, isInBoard: boolean): any {
@@ -596,6 +614,19 @@ module game {
         };
     }
 
+    function getInitialAllBoardLayer() {
+        for (let i = 0; i < gameLogic.ROWS; i++) {
+            boardLayer1[i] = [];
+            boardLayer2[i] = [];
+            boardLayer3[i] = [];
+            for (let j = 0; j < gameLogic.COLS; j++) {
+                boardLayer1[i][j] = '';
+                boardLayer2[i][j] = '';
+                boardLayer3[i][j] = '';
+            }
+        }
+    }
+    
     // function getSquareCenterXY(row: number, col: number) {
     //     var size = getSquareWidthHeight();
     //     return {
@@ -798,6 +829,19 @@ module game {
             return "grey";
         }
     }
+
+    export function getBoardColorAt_1_Layer(row: number, col: number): string {
+        return boardLayer1[row][col];
+    }
+
+    export function getBoardColorAt_2_Layer(row: number, col: number): string {
+        return boardLayer2[row][col];
+    }
+
+    export function getBoardColorAt_3_Layer(row: number, col: number): string {
+        return boardLayer3[row][col];
+    }
+
 }
 
 angular.module('myApp', ['gameServices'])
@@ -816,10 +860,11 @@ angular.module('myApp', ['gameServices'])
 
 // map in the dragged board is a pit, delete may not work
 
-// TODO Z-INDEX need to do better
+// TODO Z-INDEX need to do better, RECOMPUTE
 
 //TODO to compute the pass
 
 //TODO translation initialize
 
 // optimize compute delta in board
+// optimize map datastructure by length in each cell {length: 1}
