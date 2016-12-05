@@ -128,10 +128,10 @@ var game;
             if (type === "touchstart" && !game.draggingStartedRowCol) {
                 // drag started in prepared area
                 log.info("drag start AT PREPARED.");
-                // if (state.preparedBox[row][col] === '') {
-                //     // no color in prepared area
-                //     return;
-                // }
+                if (game.state.preparedBox[row][col] === '') {
+                    // no color in prepared area
+                    return;
+                }
                 game.draggingStartedRowCol = { row: row, col: col, isInBoard: false, indication: -1, layer: -1 };
                 computeBlockDeltas(game.draggingStartedRowCol, game.draggingStartedRowCol.isInBoard);
                 createDraggingPieceGroup(game.draggingStartedRowCol);
@@ -171,30 +171,72 @@ var game;
             game.blockDeltas = [];
             game.needToShrink = false;
             game.isVertical = false;
+            //TOTEST: print the boardDragged value
+            // for(let i = 0; i < boardDragged.length; i++) {
+            //     log.info("this is line " + i + "=======================");
+            //     for(let j = 0; j < boardDragged[i].length; j++) {
+            //         log.info("row: " + i + " col: " + j + " value :" + angular.toJson(boardDragged[i][j], true));
+            //     } 
+            // }
+            log.info("this is layer1111111111111111111111111111111");
+            for (var i = 0; i < game.boardLayer1.length; i++) {
+                log.info("this is line " + i + "=======================");
+                for (var j = 0; j < game.boardLayer1[i].length; j++) {
+                    log.info("row: " + i + " col: " + j + " value :" + game.boardLayer1[i][j]);
+                }
+            }
+            log.info("this is layer2222222222222222222222222222222");
+            for (var i = 0; i < game.boardLayer2.length; i++) {
+                log.info("this is line " + i + "=======================");
+                for (var j = 0; j < game.boardLayer2[i].length; j++) {
+                    log.info("row: " + i + " col: " + j + " value :" + game.boardLayer2[i][j]);
+                }
+            }
+            log.info("this is layer3333333333333333333333333333333");
+            for (var i = 0; i < game.boardLayer3.length; i++) {
+                log.info("this is line " + i + "=======================");
+                for (var j = 0; j < game.boardLayer3[i].length; j++) {
+                    log.info("row: " + i + " col: " + j + " value :" + game.boardLayer3[i][j]);
+                }
+            }
         }
     }
     function changeUIForEachMove() {
+        var count = 0;
+        getInitialAllBoardLayer();
         for (var i = 0; i < game.boardDragged.length; i++) {
-            for (var j = 0; j < game.boardDragged[i].length; j++) {
+            //log.info("this is line " + i + "**************");
+            for (var j = 0; j < 7; j++) {
                 var length_1 = computeLength(i, j);
-                clearOriginBoardCell(i, j);
-                var layers = findLayer(i, j, length_1);
+                //log.info("length is " + length + "-------------------");
+                //clearOriginBoardCell(i, j);
+                var layers = findLayer(i, j);
                 if (length_1 === 0) {
                 }
                 else if (length_1 === 1) {
                     game.boardLayer1[i][j] = game.boardDragged[i][j][layers.layer1];
+                    //$timeout(function () {boardLayer1[i][j] = boardDragged[i][j][layers.layer1];}, 100);
+                    count++;
                 }
                 else if (length_1 === 2) {
                     game.boardLayer1[i][j] = game.boardDragged[i][j][layers.layer1];
                     game.boardLayer2[i][j] = game.boardDragged[i][j][layers.layer2];
+                    //$timeout(function () {boardLayer1[i][j] = boardDragged[i][j][layers.layer1];}, 1000);
+                    //$timeout(function () {boardLayer2[i][j] = boardDragged[i][j][layers.layer2];}, 1000);
+                    count++;
                 }
                 else if (length_1 === 3) {
                     game.boardLayer1[i][j] = game.boardDragged[i][j][layers.layer1];
                     game.boardLayer2[i][j] = game.boardDragged[i][j][layers.layer2];
                     game.boardLayer3[i][j] = game.boardDragged[i][j][layers.layer3];
+                    count++;
+                }
+                if (count === 3) {
+                    $timeout(function () { }, 100);
                 }
             }
         }
+        //$timeout(function () {}, 1000);
     }
     function computeLength(row, col) {
         var length = 0;
@@ -208,10 +250,12 @@ var game;
         game.boardLayer2[row][col] = '';
         game.boardLayer3[row][col] = '';
     }
-    function findLayer(row, col, length) {
+    function findLayer(row, col) {
+        //log.info("this is findLayer function");
         var bottom = -1;
         var middle = -1;
         var up = -1;
+        var length = 0;
         for (var key in game.boardDragged[row][col]) {
             if (parseInt(key) > up) {
                 var temp1 = up;
@@ -228,17 +272,36 @@ var game;
             else {
                 bottom = parseInt(key);
             }
+            length++;
         }
+        //log.info("the length is " + length + "-------------");
         // settle the layer
         if (length === 1) {
             bottom = up;
             up = -1;
+            middle = -1;
         }
         else if (length === 2) {
             bottom = middle;
             middle = up;
+            up = -1;
         }
         return { layer1: bottom, layer2: middle, layer3: up };
+    }
+    function findExactLayer(row, col, ind) {
+        var result = findLayer(row, col);
+        var up = result.layer3;
+        var middle = result.layer2;
+        var bottom = result.layer1;
+        if (ind === up) {
+            return 3;
+        }
+        else if (ind === middle) {
+            return 2;
+        }
+        else if (ind === bottom) {
+            return 1;
+        }
     }
     // Helper Function: to find the neighbor cells related to the finger-pointed cell
     function computeBlockDeltas(draggingStartedRowCol, isInBoard) {
@@ -267,9 +330,9 @@ var game;
     function computeBlockDeltasInBoard(draggingStartedRowCol) {
         var tempBoardDragged = [];
         // extend the board to initialize the boundary
-        for (var i = 0; i < gameLogic.ROWS + 2; i++) {
+        for (var i = 0; i < gameLogic.ROWS + 4; i++) {
             tempBoardDragged[i] = [];
-            for (var j = 0; j < gameLogic.COLS + 2; j++) {
+            for (var j = 0; j < gameLogic.COLS + 4; j++) {
                 // every cell in boardDragged is a map datastructure
                 // the key is the indication, the value is the color
                 tempBoardDragged[i][j] = {};
@@ -345,8 +408,10 @@ var game;
         var ind = -1;
         var layer = 0;
         for (var key in game.boardDragged[row][col]) {
-            if (parseInt(key) > ind) {
-                ind = parseInt(key);
+            if (game.boardDragged[row][col].hasOwnProperty(key)) {
+                if (parseInt(key) > ind) {
+                    ind = parseInt(key);
+                }
             }
             layer++;
         }
@@ -377,11 +442,13 @@ var game;
             game.draggingPiece = document.getElementById("MyPieceBoard_" + layer + "_Layer" + draggingStartedRowCol.row + "x" + draggingStartedRowCol.col);
             // set the dragging piece
             game.draggingPiece.style['z-index'] = 100;
+            //draggingPiece.style.background = "pink";
             // get the html element of the neighbors of draggingPiece
             for (var i = 0; i < game.blockDeltas.length; i++) {
                 var newRow = draggingStartedRowCol.row + game.blockDeltas[i].deltaRow;
                 var newCol = draggingStartedRowCol.col + game.blockDeltas[i].deltaCol;
-                var newhtml = document.getElementById("MyPieceBoard_" + layer + "_Layer" + newRow + "x" + newCol);
+                var exactLayer = findExactLayer(newRow, newCol, draggingStartedRowCol.indication);
+                var newhtml = document.getElementById("MyPieceBoard_" + exactLayer + "_Layer" + newRow + "x" + newCol);
                 newhtml.style['z-index'] = 100;
                 game.draggingPieceGroup[i] = newhtml;
             }
@@ -417,7 +484,7 @@ var game;
             size = game.boardSquareSize;
         }
         if (isInBoard) {
-            setDraggingPieceTopLeft(game.draggingPiece, draggingPieceCurTopLeft, getSquareTopLeft_Box(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col));
+            setDraggingPieceTopLeft(game.draggingPiece, draggingPieceCurTopLeft, getSquareTopLeft(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col));
             originalTopLeft = getSquareTopLeft(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col);
             originalSize = game.boardSquareSize;
         }
@@ -544,12 +611,12 @@ var game;
         }
     }
     function clearOriginalPieceInBoard(from) {
-        game.boardDragged[from.row][from.col].delete(from.indication);
+        delete game.boardDragged[from.row][from.col][from.indication];
         for (var i = 0; i < game.blockDeltas.length; i++) {
             var oldRow = from.row + game.blockDeltas[i].deltaRow;
             var oldCol = from.col + game.blockDeltas[i].deltaCol;
             // clear the color in the original place
-            game.boardDragged[oldRow][oldCol].delete(from.indication);
+            delete game.boardDragged[oldRow][oldCol][from.indication];
         }
     }
     function clearOriginalPieceInPrepared(from) {
@@ -617,9 +684,11 @@ var game;
             var r_neighbor = row + delta.deltaRow;
             var c_neighbor = col + delta.deltaCol;
             if (r_neighbor < 0 || r_neighbor >= game.rowsNum || c_neighbor < 0 || c_neighbor >= game.colsNum) {
+                log.info("this is outside the board******************");
                 return false;
             }
         }
+        log.info("this is inside the board******************");
         return true;
     }
     //------------------------------------------------------------------------------------------------
@@ -697,10 +766,6 @@ var game;
             game.animationEndedTimeout = null;
         }
     }
-    // function animationEndedCallback() {
-    //     log.info("Animation ended");
-    //     maybeSendComputerMove();
-    // }
     function isFirstMove() {
         log.log("this is the first move");
         return !game.currentUpdateUI.move.stateAfterMove;
@@ -780,7 +845,22 @@ var game;
     }
     game.getPreparedBoxColor = getPreparedBoxColor;
     function getBoardColorAt_1_Layer(row, col) {
-        return game.boardLayer1[row][col];
+        var color = game.boardLayer1[row][col];
+        if (color === 'R') {
+            return "rgb(255, 128, 170)";
+        }
+        else if (color === 'G') {
+            return "rgb(71, 209, 71)";
+        }
+        else if (color === 'B') {
+            return "rgb(51, 204, 255)";
+        }
+        else if (color === 'Y') {
+            return "rgb(246, 246, 85)";
+        }
+        else {
+            return "grey";
+        }
     }
     game.getBoardColorAt_1_Layer = getBoardColorAt_1_Layer;
     function getBoardColorAt_2_Layer(row, col) {
@@ -791,6 +871,10 @@ var game;
         return game.boardLayer3[row][col];
     }
     game.getBoardColorAt_3_Layer = getBoardColorAt_3_Layer;
+    function getBoardColorAt_1_LayerShow(row, col) {
+        return true;
+    }
+    game.getBoardColorAt_1_LayerShow = getBoardColorAt_1_LayerShow;
 })(game || (game = {}));
 angular.module('myApp', ['gameServices'])
     .run(function () {

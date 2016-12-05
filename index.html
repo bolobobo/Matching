@@ -56,18 +56,18 @@
                             class = "{{game.getBoardBoxColor(row,col)}}"
                             id="MyPieceBoardOriginal{{row}}x{{col}}">
                             <!--the first layer-->
-                            <div style="position:absolute; width:100%; height:100%;"> 
-                                <svg style="position:absolute; width:100%; height:100%; z-index: 70"
+                            <!--<div style="position:absolute; width:100%; height:100%;"> -->
+                                <svg style="position:absolute; width:100%; height:100%; "
                                     id="MyPieceBoard_1_Layer{{row}}x{{col}}"
-                                    class="{{game.getBoardColorAt_1_Layer(row, col)}}">
+                                    class="{{game.boardLayer1[row][col]}}">
                                     <!--the second layer-->
                                     <div style="position:absolute; width:100%; height:100%;"> 
-                                        <svg style="position:absolute; width:100%; height:100%; z-index: 80"
+                                        <svg style="position:absolute; width:100%; height:100%; "
                                             id="MyPieceBoard_2_Layer{{row}}x{{col}}"
                                             class="{{game.getBoardColorAt_2_Layer(row, col)}}">
                                             <!--the third layer-->
                                             <div style="position:absolute; width:100%; height:100%;"> 
-                                                <svg style="position:absolute; width:100%; height:100%; z-index: 90"
+                                                <svg style="position:absolute; width:100%; height:100%;"
                                                     id="MyPieceBoard_3_Layer{{row}}x{{col}}"
                                                     class="{{game.getBoardColorAt_3_Layer(row, col)}}">
 
@@ -76,7 +76,7 @@
                                         </svg>
                                     </div>
                                 </svg>
-                            </div>
+                            <!--</div>-->
                         </div>
                     </div>
                 </div>
@@ -90,7 +90,7 @@
                     Style="position: absolute; left: {{colbox * 33.3333}}%; width: 33.3333%; height: 100%"
                     class = "gameBox";>
                             <!--<div style="position:absolute; width:100%; height:100%;"
-                                id="MyPieceBox_1_layer{{rowbox}}x{{colbox}}"
+                                id="MyPieceBox_{{rowbox}}x{{colbox}}"
                                 > 
                                 <svg style="position:absolute; width:100%; height:100%;"
                                     id="MyPieceBox{{rowbox}}x{{colbox}}"

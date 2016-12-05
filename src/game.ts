@@ -130,7 +130,6 @@ module game {
                         // no piece be moved in this cell
                         return;
                     }
-
                     draggingStartedRowCol = {row: row, col: col, isInBoard: true, indication: ind, layer: layer};
                     computeBlockDeltas(draggingStartedRowCol, draggingStartedRowCol.isInBoard);
                     createDraggingPieceGroup(draggingStartedRowCol);
@@ -160,10 +159,10 @@ module game {
             if (type === "touchstart" && !draggingStartedRowCol) {
                 // drag started in prepared area
                 log.info("drag start AT PREPARED.");
-                // if (state.preparedBox[row][col] === '') {
-                //     // no color in prepared area
-                //     return;
-                // }
+                if (state.preparedBox[row][col] === '') {
+                    // no color in prepared area
+                    return;
+                }
                 
                 draggingStartedRowCol = {row: row, col: col, isInBoard: false, indication: -1, layer: -1};
                 computeBlockDeltas(draggingStartedRowCol, draggingStartedRowCol.isInBoard);
@@ -208,13 +207,35 @@ module game {
             blockDeltas = [];
             needToShrink = false;
             isVertical = false;
-            // TOTEST: print the boardDragged value
+            //TOTEST: print the boardDragged value
             // for(let i = 0; i < boardDragged.length; i++) {
             //     log.info("this is line " + i + "=======================");
             //     for(let j = 0; j < boardDragged[i].length; j++) {
             //         log.info("row: " + i + " col: " + j + " value :" + angular.toJson(boardDragged[i][j], true));
             //     } 
             // }
+            log.info("this is layer1111111111111111111111111111111")
+            for(let i = 0; i < boardLayer1.length; i++) {
+                log.info("this is line " + i + "=======================");
+                for(let j = 0; j < boardLayer1[i].length; j++) {
+                    log.info("row: " + i + " col: " + j + " value :" + boardLayer1[i][j]);
+                } 
+            }
+            log.info("this is layer2222222222222222222222222222222")
+            for(let i = 0; i < boardLayer2.length; i++) {
+                log.info("this is line " + i + "=======================");
+                for(let j = 0; j < boardLayer2[i].length; j++) {
+                    log.info("row: " + i + " col: " + j + " value :" + boardLayer2[i][j]);
+                } 
+            }
+            log.info("this is layer3333333333333333333333333333333")
+            for(let i = 0; i < boardLayer3.length; i++) {
+                log.info("this is line " + i + "=======================");
+                for(let j = 0; j < boardLayer3[i].length; j++) {
+                    log.info("row: " + i + " col: " + j + " value :" + boardLayer3[i][j]);
+                } 
+            }
+
             // TOTEST: print the color in preparedBox
             // for(let i = 0; i < 3; i++) {
             //     for(let j = 0; j < 3; j++) {
@@ -225,26 +246,41 @@ module game {
     }
 
     function changeUIForEachMove() {
+        let count = 0;
+        getInitialAllBoardLayer();
         for(let i = 0; i < boardDragged.length; i++) {
-            for(let j = 0; j < boardDragged[i].length; j++) {
+            //log.info("this is line " + i + "**************");
+            for(let j = 0; j < 7; j++) {
                 let length = computeLength(i, j);
-                clearOriginBoardCell(i, j);
-                let layers = findLayer(i, j, length);
+                //log.info("length is " + length + "-------------------");
+                //clearOriginBoardCell(i, j);
+                let layers = findLayer(i, j);
 
                 if (length === 0) {
                     // just clear the origin layers
                 } else if (length === 1) {
                     boardLayer1[i][j] = boardDragged[i][j][layers.layer1];
+                    //$timeout(function () {boardLayer1[i][j] = boardDragged[i][j][layers.layer1];}, 100);
+                    count++;
                 } else if (length === 2) {
                     boardLayer1[i][j] = boardDragged[i][j][layers.layer1];
                     boardLayer2[i][j] = boardDragged[i][j][layers.layer2];
+                    //$timeout(function () {boardLayer1[i][j] = boardDragged[i][j][layers.layer1];}, 1000);
+                    //$timeout(function () {boardLayer2[i][j] = boardDragged[i][j][layers.layer2];}, 1000);
+                    count++;
                 } else if (length === 3) {
                     boardLayer1[i][j] = boardDragged[i][j][layers.layer1];
                     boardLayer2[i][j] = boardDragged[i][j][layers.layer2];
                     boardLayer3[i][j] = boardDragged[i][j][layers.layer3];
+                    count++;
+                }
+                if(count === 3) {
+                    $timeout(function () {}, 100);
                 }
             }
+            
         }
+        //$timeout(function () {}, 1000);
     }
 
     function computeLength(row: number, col: number): number {
@@ -261,10 +297,12 @@ module game {
         boardLayer3[row][col] = '';
     }
 
-    function findLayer(row: number, col: number, length: number): any {
+    function findLayer(row: number, col: number): any {
+        //log.info("this is findLayer function");
         let bottom: number = -1;
         let middle: number = -1;
         let up: number = -1;
+        let length: number = 0;
         for (let key in boardDragged[row][col]) {
             if(parseInt(key) > up) {
                 let temp1 = up;
@@ -279,18 +317,35 @@ module game {
             } else {
                 bottom = parseInt(key);
             }
+            length++;
         }
+        //log.info("the length is " + length + "-------------");
         // settle the layer
         if (length === 1) {
             bottom = up;
             up = -1;
+            middle = -1;
         } else if (length === 2) {
             bottom = middle;
             middle = up;
+            up = -1;
         } 
         return {layer1: bottom, layer2: middle, layer3: up};
     }
 
+    function findExactLayer(row: number, col: number, ind: number): number {
+        let result = findLayer(row, col);
+        let up: number = result.layer3;
+        let middle: number = result.layer2;
+        let bottom: number = result.layer1;
+        if (ind === up) {
+            return 3;
+        } else if (ind === middle) {
+            return 2;
+        } else if (ind === bottom) {
+            return 1;
+        }
+    }
     // Helper Function: to find the neighbor cells related to the finger-pointed cell
     function computeBlockDeltas(draggingStartedRowCol: any, isInBoard: boolean): any {
         if (!isInBoard) {
@@ -316,9 +371,9 @@ module game {
     function computeBlockDeltasInBoard(draggingStartedRowCol: any) {
         let tempBoardDragged: any = [];
         // extend the board to initialize the boundary
-        for (let i = 0; i < gameLogic.ROWS + 2; i++) {
+        for (let i = 0; i < gameLogic.ROWS + 4; i++) {
             tempBoardDragged[i] = [];
-            for (let j = 0; j < gameLogic.COLS + 2; j++) {
+            for (let j = 0; j < gameLogic.COLS + 4; j++) {
                 // every cell in boardDragged is a map datastructure
                 // the key is the indication, the value is the color
                 tempBoardDragged[i][j] = {};
@@ -392,8 +447,10 @@ module game {
         let ind: number = -1;
         let layer: number = 0;
         for (let key in boardDragged[row][col]) {
-            if(parseInt(key) > ind) {
-                ind = parseInt(key);
+            if (boardDragged[row][col].hasOwnProperty(key)) {
+                if(parseInt(key) > ind) {
+                    ind = parseInt(key);
+                }
             }
             layer++;
         }
@@ -427,12 +484,14 @@ module game {
             draggingPiece = document.getElementById("MyPieceBoard_" + layer + "_Layer" + draggingStartedRowCol.row + "x" + draggingStartedRowCol.col);
             // set the dragging piece
             draggingPiece.style['z-index'] = 100;
+            //draggingPiece.style.background = "pink";
 
             // get the html element of the neighbors of draggingPiece
             for (let i = 0; i < blockDeltas.length; i++) {
                 let newRow = draggingStartedRowCol.row + blockDeltas[i].deltaRow;
                 let newCol = draggingStartedRowCol.col + blockDeltas[i].deltaCol;
-                let newhtml: any = document.getElementById("MyPieceBoard_" + layer + "_Layer" + newRow + "x" + newCol);
+                let exactLayer: number = findExactLayer(newRow, newCol, draggingStartedRowCol.indication)
+                let newhtml: any = document.getElementById("MyPieceBoard_" + exactLayer + "_Layer" + newRow + "x" + newCol);
                 newhtml.style['z-index'] = 100;
                 draggingPieceGroup[i] = newhtml;
             }
@@ -455,6 +514,7 @@ module game {
             draggingPieceGroup[i].style['width'] = size.width;
             draggingPieceGroup[i].style['height'] = size.height;
             draggingPieceGroup[i].style['z-index'] = 100;
+            //draggingPieceGroup[i].style.background = 'grey';
         }
     }
 
@@ -471,7 +531,7 @@ module game {
         }
 
         if (isInBoard) {
-            setDraggingPieceTopLeft(draggingPiece,  draggingPieceCurTopLeft, getSquareTopLeft_Box(draggingStartedRowCol.row, draggingStartedRowCol.col));
+            setDraggingPieceTopLeft(draggingPiece,  draggingPieceCurTopLeft, getSquareTopLeft(draggingStartedRowCol.row, draggingStartedRowCol.col));
             originalTopLeft = getSquareTopLeft(draggingStartedRowCol.row, draggingStartedRowCol.col);
             originalSize = boardSquareSize;
         } else {
@@ -603,12 +663,12 @@ module game {
     }
 
     function clearOriginalPieceInBoard(from: any) {
-        boardDragged[from.row][from.col].delete(from.indication);
+        delete boardDragged[from.row][from.col][from.indication];
         for (let i = 0; i < blockDeltas.length; i++) {
             let oldRow = from.row + blockDeltas[i].deltaRow;
             let oldCol = from.col + blockDeltas[i].deltaCol;
             // clear the color in the original place
-            boardDragged[oldRow][oldCol].delete(from.indication);
+            delete boardDragged[oldRow][oldCol][from.indication];
         }
     }
 
@@ -682,9 +742,11 @@ module game {
           let r_neighbor = row + delta.deltaRow;
           let c_neighbor = col + delta.deltaCol;
           if (r_neighbor < 0 || r_neighbor >= rowsNum || c_neighbor < 0 || c_neighbor >= colsNum) {
+            log.info("this is outside the board******************");
             return false;
           }
         }
+        log.info("this is inside the board******************");
         return true;
     }
 
@@ -780,10 +842,6 @@ module game {
         }
     }
 
-    // function animationEndedCallback() {
-    //     log.info("Animation ended");
-    //     maybeSendComputerMove();
-    // }
 
 
     function isFirstMove() {
@@ -871,7 +929,19 @@ module game {
     }
 
     export function getBoardColorAt_1_Layer(row: number, col: number): string {
-        return boardLayer1[row][col];
+        let color = boardLayer1[row][col];
+        if (color === 'R') {
+            return "rgb(255, 128, 170)";
+        } else if (color === 'G') {
+            return "rgb(71, 209, 71)";
+        } else if (color === 'B') {
+            return "rgb(51, 204, 255)";
+        } else if (color === 'Y') {
+            return "rgb(246, 246, 85)";
+        } else {
+            return "grey";
+        }
+
     }
 
     export function getBoardColorAt_2_Layer(row: number, col: number): string {
@@ -882,6 +952,9 @@ module game {
         return boardLayer3[row][col];
     }
 
+    export function getBoardColorAt_1_LayerShow(row: number, col: number): boolean {
+        return true;
+    }
 }
 
 angular.module('myApp', ['gameServices'])
