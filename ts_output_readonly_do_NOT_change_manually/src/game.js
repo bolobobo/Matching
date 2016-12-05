@@ -159,6 +159,7 @@ var game;
                 game.needToShrink = false;
                 setDraggingPieceGroupTopLeft(getSquareTopLeft(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col), game.draggingStartedRowCol.isInBoard);
             }
+            //changeUIForEachMove();
             // clear the draggingPiece every time when ended
             game.draggingStartedRowCol = null;
             game.draggingPiece = null;
@@ -168,6 +169,17 @@ var game;
             game.isVertical = false;
         }
     }
+    // function changeUIForEachMove() {
+    //     let ind: number = -1;
+    //     let layer: number = 0;
+    //     for (let key in boardDragged[row][col]) {
+    //         if(parseInt(key) > ind) {
+    //             ind = parseInt(key);
+    //         }
+    //         layer++;
+    //     }
+    //     return {ind: ind, layer: layer};
+    // }
     // Helper Function: to find the neighbor cells related to the finger-pointed cell
     function computeBlockDeltas(draggingStartedRowCol, isInBoard) {
         if (!isInBoard) {
@@ -408,13 +420,13 @@ var game;
         }
     }
     function movePieceToPrepared(from, to) {
-        if (game.blockDeltas[0].col === 1 && game.blockDeltas[1].col === 2) {
+        if (game.blockDeltas[0].deltaCol === 1 && game.blockDeltas[1].deltaCol === 2) {
             setPieceToFitPreparedArea(from, to, 0, [0, 1, 2]);
         }
-        else if (game.blockDeltas[0].col === -1 && game.blockDeltas[1].col === 1) {
+        else if (game.blockDeltas[0].deltaCol === -1 && game.blockDeltas[1].deltaCol === 1) {
             setPieceToFitPreparedArea(from, to, 1, [0, -1, 1]);
         }
-        else if (game.blockDeltas[0].col === -2 && game.blockDeltas[1].col === -1) {
+        else if (game.blockDeltas[0].deltaCol === -2 && game.blockDeltas[1].deltaCol === -1) {
             setPieceToFitPreparedArea(from, to, 2, [0, -2, -1]);
         }
         // clear the original color 
@@ -487,6 +499,7 @@ var game;
             var oldCol = from.col + game.blockDeltas[i].deltaCol;
             // clear the color in the original place
             //$timeout(function() {getPreparedBoxColor(oldRow, oldCol);},100);
+            game.state.preparedBox[oldRow][oldCol] = '';
             $timeout(function () { game.state.preparedBox[oldRow][oldCol] = ''; }, 100);
         };
         for (var i = 0; i < game.blockDeltas.length; i++) {

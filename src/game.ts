@@ -196,7 +196,9 @@ module game {
                 draggingStartedRowCol.isInBoard);
                 
             }
+            //changeUIForEachMove();
             // clear the draggingPiece every time when ended
+            
             draggingStartedRowCol = null;
             draggingPiece = null;
             draggingPieceGroup = [];
@@ -210,8 +212,26 @@ module game {
             //         log.info("row: " + i + " col: " + j + " value :" + angular.toJson(boardDragged[i][j], true));
             //     } 
             // }
+            // TOTEST: print the color in preparedBox
+            // for(let i = 0; i < 3; i++) {
+            //     for(let j = 0; j < 3; j++) {
+            //         log.info("PREPARED, row: " + i + " col: " + j + " color: " + state.preparedBox[i][j]);
+            //     }
+            // }
         }  
     }
+
+    // function changeUIForEachMove() {
+    //     let ind: number = -1;
+    //     let layer: number = 0;
+    //     for (let key in boardDragged[row][col]) {
+    //         if(parseInt(key) > ind) {
+    //             ind = parseInt(key);
+    //         }
+    //         layer++;
+    //     }
+    //     return {ind: ind, layer: layer};
+    // }
 
     // Helper Function: to find the neighbor cells related to the finger-pointed cell
     function computeBlockDeltas(draggingStartedRowCol: any, isInBoard: boolean): any {
@@ -461,11 +481,11 @@ module game {
     }
 
     function movePieceToPrepared(from: any, to: any) {
-        if (blockDeltas[0].col === 1 &&  blockDeltas[1].col === 2 ) {
+        if (blockDeltas[0].deltaCol === 1 &&  blockDeltas[1].deltaCol === 2 ) {
             setPieceToFitPreparedArea(from, to, 0, [0, 1, 2]);
-        } else if (blockDeltas[0].col === -1 &&  blockDeltas[1].col === 1 ){
+        } else if (blockDeltas[0].deltaCol === -1 &&  blockDeltas[1].deltaCol === 1 ){
             setPieceToFitPreparedArea(from, to, 1, [0, -1, 1]);
-        } else if (blockDeltas[0].col === -2 &&  blockDeltas[1].col === -1 ){
+        } else if (blockDeltas[0].deltaCol === -2 &&  blockDeltas[1].deltaCol === -1 ){
             setPieceToFitPreparedArea(from, to, 2, [0, -2, -1]);
         }
 
@@ -541,8 +561,9 @@ module game {
             let oldCol = from.col + blockDeltas[i].deltaCol;
             // clear the color in the original place
             //$timeout(function() {getPreparedBoxColor(oldRow, oldCol);},100);
+            state.preparedBox[oldRow][oldCol] = '';
             $timeout(function () {state.preparedBox[oldRow][oldCol] = '';}, 100);
-            //state.preparedBox[oldRow][oldCol] = '';
+            
         }
     }
 
