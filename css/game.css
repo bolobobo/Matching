@@ -25,7 +25,34 @@ textarea, input {
 
 .slowlyAppear {
   animation: slowlyAppear 0.5s linear;
+
 }
+
+.R {
+  /*border: 0.5px solid grey;*/
+  background-color: rgb(255, 128, 170);
+  border-radius: 10%;
+}
+
+.G {
+  border: 1% solid grey;
+  background-color: rgb(71, 209, 71);
+  border-radius: 10%;
+}
+
+.B {
+  /*border: 0.5px solid grey;*/
+  background-color: rgb(51, 204, 255);
+  border-radius: 10%;
+  /*opacity: 0.8;*/
+}
+
+.Y {
+  /*border: 0.5px solid grey;*/
+  background-color: rgb(246, 246, 85);
+  border-radius: 10%;
+}
+
 
 @keyframes slowlyAppear {
   from {opacity: 0.1;}

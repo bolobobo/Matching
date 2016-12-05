@@ -5,11 +5,11 @@ var game;
     // I export all variables to make it easy to debug in the browser by
     // simply typing in the console, e.g.,
     // game.currentUpdateUI
+    // basic configuration
     game.currentUpdateUI = null;
     game.didMakeMove = false; // You can only make one move per updateUI
     game.animationEndedTimeout = null;
     game.state = null;
-    //export let clickToDragPiece: HTMLImageElement;
     game.blockDeltas = [];
     // export let blockDeltasRotated: any = [];
     game.rowsNum = 8;
@@ -21,8 +21,14 @@ var game;
     game.draggingPiece = null;
     game.draggingPieceGroup = [];
     game.boardDragged = []; // to record which box has been moved to the board
+    game.needToShrink = false; // At begginning, do not need to Shrink
+    game.needToSettle = false;
+    game.isVertical = false; // denote the shape of the draggingPieceGroup 
+    game.boardLayer1 = [];
+    game.boardLayer2 = [];
+    game.boardLayer3 = [];
     /**
-     * Register for the turnBasedService3.js
+     * Register for the turnBasedService3.js file
      */
     function init() {
         //registerServiceWorker();
@@ -37,17 +43,22 @@ var game;
             gotMessageFromPlatform: null,
         });
         //initialize the drag-n-drop varibles
-        dragAndDropService.addDragListener("boardArea", handleDragEvent);
         game.gameArea = document.getElementById("gameArea");
         game.boardArea = document.getElementById("boardArea");
         game.gamePrepare = document.getElementById("gamePrepare");
-        getInitialBoardDragged();
+        getInitialBoardDragged(); // initialize the boardDragged
+        getInitialAllBoardLayer(); // initialize all the boardLayer to store the color of each layer in board
+        getSquareWidthHeight();
+        getSquareWidthHeight_Box();
         game.indication = 0;
-        //clickToDragPiece = document.getElementById("clickToDragPiece");
+        dragAndDropService.addDragListener("boardArea", handleDragEvent);
     }
     game.init = init;
     /**
-     * Drag the prepared box to the game board:
+     * Drag the piece from prepared area to the game board area
+     * OR from board area to board area
+     * OR from prepared area to prepared area
+     * OR from board area to prepared area
      * Suppose I'm dragging a blokus block that looks like:
      * XYX
      * --------
@@ -64,75 +75,201 @@ var game;
         // Center point in gameArea
         var x = clientX - game.boardArea.offsetLeft - game.gameArea.offsetLeft;
         var y = clientY - game.boardArea.offsetTop - game.gameArea.offsetTop;
-        //TODO: CLEAR Drag
-        // Is the touch in the prepared box area?
+        // Is the touch in the whole board area?
         if (x < 0 || y < 0 || x >= game.boardArea.clientWidth || y >= game.boardArea.clientHeight) {
-            //TODO: if the drag is outside the legal board, it should return to the original position
-            log.info("this is the outside preparedBox and board");
             if (!game.draggingPiece) {
                 // The start touch is in a valid area, ignore it
                 return;
             }
             else {
-                // the finger is in the piece, but the touch is in a invalid area 
-                // Drag the piece where the touch is (without snapping to a square).
-                var size = getSquareWidthHeight();
+                // The finger is in the piece, but the touch is in a invalid area 
+                // Drag the piece where the touch is (without snapping to a square). 
+                // Just to show the drag position
                 // do not need to shrink the size of the cell
-                setDraggingPieceGroupTopLeft({ top: y - size.height / 2, left: x - size.width / 2 }, false, game.draggingStartedRowCol.isInBoard);
+                setDraggingPieceGroupTopLeft({ top: y - game.boardSquareSize.height / 2, left: x - game.boardSquareSize.width / 2 }, game.draggingStartedRowCol.isInBoard);
+            }
+        }
+        else if (y < game.boardArea.clientWidth + game.boardArea.clientWidth * 0.0375) {
+            // the touch in the board area but not in the prepared area
+            // Position: Inside board box area. Let's find the containing square's row and col
+            var row = Math.floor(game.rowsNum * y / game.boardArea.clientWidth);
+            var col = Math.floor(game.colsNum * x / game.boardArea.clientWidth);
+            log.info("this is in Board area: row is " + row + " col is " + col);
+            if (type === "touchstart" && !game.draggingStartedRowCol) {
+                // drag started in board
+                log.info("drag start AT BOARD.");
+                var ind = computeIndicationAndLayer(row, col).ind;
+                var layer = computeIndicationAndLayer(row, col).layer;
+                if (ind === -1) {
+                    // no piece be moved in this cell
+                    return;
+                }
+                game.draggingStartedRowCol = { row: row, col: col, isInBoard: true, indication: ind, layer: layer };
+                computeBlockDeltas(game.draggingStartedRowCol, game.draggingStartedRowCol.isInBoard);
+                createDraggingPieceGroup(game.draggingStartedRowCol);
+                setDraggingPieceGroupTopLeft(getSquareTopLeft(row, col), game.draggingStartedRowCol.isInBoard);
+            }
+            if (!game.draggingPiece) {
+                return;
+            }
+            if (type === "touchend") {
+                var from = game.draggingStartedRowCol;
+                var to = { row: row, col: col };
+                dragDone(from, to, "BOARD");
+            }
+            else {
+                // Drag continue
+                setDraggingPieceGroupTopLeft(getSquareTopLeft(row, col), game.draggingStartedRowCol.isInBoard);
             }
         }
         else {
-            // the first touch in the board but not in the prepared area
-            if (!game.draggingPiece && y < game.boardArea.clientWidth + game.boardArea.clientWidth * 0.0375) {
-                return;
-            }
-            if (game.draggingPiece && y < game.boardArea.clientWidth + game.boardArea.clientWidth * 0.0375) {
-            }
-            else {
-                // Inside prepared box area. Let's find the containing square's row and col
-                var col = Math.floor(game.colsBox * x / game.boardArea.clientWidth) % game.rowsBox;
-                var row = Math.floor(game.rowsBox * x / game.boardArea.clientWidth);
-                log.info("the prepared box row is: " + row + " col is : " + col);
-                if (type === "touchstart" && !game.draggingStartedRowCol) {
-                    // drag started
-                    log.info("drag start");
-                    game.draggingStartedRowCol = { row: row, col: col, isInBoard: false, indication: -1 };
-                    computeBlockDeltas(game.draggingStartedRowCol);
-                    createDraggingPieceGroup(game.draggingStartedRowCol);
-                    setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(row, col), false, game.draggingStartedRowCol.isInBoard);
-                }
-                if (!game.draggingPiece) {
+            // Position: Inside prepared box area. Let's find the containing square's row and col
+            var col = Math.floor(game.colsBox * x / game.boardArea.clientWidth) % game.rowsBox;
+            var row = Math.floor(game.rowsBox * x / game.boardArea.clientWidth);
+            if (type === "touchstart" && !game.draggingStartedRowCol) {
+                // drag started in prepared area
+                log.info("drag start AT PREPARED.");
+                if (game.state.preparedBox[row][col] === '') {
+                    // no color in prepared area
                     return;
                 }
-                if (type === "touchend") {
-                    var from = game.draggingStartedRowCol;
-                    var to = { row: row, col: col };
+                game.draggingStartedRowCol = { row: row, col: col, isInBoard: false, indication: -1, layer: -1 };
+                computeBlockDeltas(game.draggingStartedRowCol, game.draggingStartedRowCol.isInBoard);
+                createDraggingPieceGroup(game.draggingStartedRowCol);
+                setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(row, col), game.draggingStartedRowCol.isInBoard);
+            }
+            if (!game.draggingPiece) {
+                return;
+            }
+            if (type === "touchend") {
+                var from = game.draggingStartedRowCol;
+                var to = { row: row, col: col };
+                dragDone(from, to, "PREPARED");
+            }
+            else {
+                // Drag continue
+                setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(row, col), game.draggingStartedRowCol.isInBoard);
+            }
+        }
+        // If the drag is outside the legal board, it should return to the original position
+        if (type === "touchend" || type === "touchcancel" || type === "touchleave") {
+            // drag ended
+            // return the piece to it's original style (then angular will take care to hide it).
+            if (!game.draggingStartedRowCol.isInBoard) {
+                game.needToShrink = true;
+                game.needToSettle = true;
+                setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col), game.draggingStartedRowCol.isInBoard);
+                setDraggingPieceGroupStyle();
+            }
+            else {
+                game.needToShrink = false;
+                game.needToSettle = true;
+                setDraggingPieceGroupTopLeft(getSquareTopLeft(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col), game.draggingStartedRowCol.isInBoard);
+                setDraggingPieceGroupStyle();
+            }
+            changeUIForEachMove();
+            // clear the draggingPiece every time when ended
+            game.draggingStartedRowCol = null;
+            game.draggingPiece = null;
+            game.draggingPieceGroup = [];
+            game.blockDeltas = [];
+            game.needToShrink = false;
+            game.isVertical = false;
+            game.needToSettle = false;
+        }
+    }
+    function changeUIForEachMove() {
+        var count = 0;
+        getInitialAllBoardLayer();
+        for (var i = 0; i < game.boardDragged.length; i++) {
+            for (var j = 0; j < game.boardDragged[i].length; j++) {
+                var length_1 = computeLength(i, j);
+                //clearOriginBoardCell(i, j);
+                var layers = findLayer(i, j);
+                if (length_1 === 0) {
                 }
-                else {
-                    // Drag continue
-                    setDraggingPieceGroupTopLeft(getSquareTopLeft(row, col), false, game.draggingStartedRowCol.isInBoard);
+                else if (length_1 === 1) {
+                    game.boardLayer1[i][j] = game.boardDragged[i][j][layers.layer1];
+                }
+                else if (length_1 === 2) {
+                    game.boardLayer1[i][j] = game.boardDragged[i][j][layers.layer1];
+                    game.boardLayer2[i][j] = game.boardDragged[i][j][layers.layer2];
+                }
+                else if (length_1 === 3) {
+                    game.boardLayer1[i][j] = game.boardDragged[i][j][layers.layer1];
+                    game.boardLayer2[i][j] = game.boardDragged[i][j][layers.layer2];
+                    game.boardLayer3[i][j] = game.boardDragged[i][j][layers.layer3];
                 }
             }
-            if (type === "touchend" || type === "touchcancel" || type === "touchleave") {
-                // drag ended
-                // return the piece to it's original style (then angular will take care to hide it).
-                if (!game.draggingStartedRowCol.isInBoard) {
-                    setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col), false, game.draggingStartedRowCol.isInBoard);
-                }
-                else {
-                    setDraggingPieceGroupTopLeft(getSquareTopLeft(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col), false, game.draggingStartedRowCol.isInBoard);
-                }
-                // clear the draggingPiece every time when ended
-                game.draggingStartedRowCol = null;
-                game.draggingPiece = null;
-                game.draggingPieceGroup = [];
-                game.blockDeltas = [];
+        }
+        $timeout(function () { }, 100);
+    }
+    function computeLength(row, col) {
+        var length = 0;
+        for (var key in game.boardDragged[row][col]) {
+            length++;
+        }
+        return length;
+    }
+    function clearOriginBoardCell(row, col) {
+        game.boardLayer1[row][col] = '';
+        game.boardLayer2[row][col] = '';
+        game.boardLayer3[row][col] = '';
+    }
+    function findLayer(row, col) {
+        var bottom = -1;
+        var middle = -1;
+        var up = -1;
+        var length = 0;
+        for (var key in game.boardDragged[row][col]) {
+            if (parseInt(key) > up) {
+                var temp1 = up;
+                var temp2 = middle;
+                up = parseInt(key);
+                middle = temp1;
+                bottom = temp2;
             }
+            else if (parseInt(key) > middle) {
+                var temp1 = middle;
+                middle = parseInt(key);
+                bottom = temp1;
+            }
+            else {
+                bottom = parseInt(key);
+            }
+            length++;
+        }
+        // settle the layer
+        if (length === 1) {
+            bottom = up;
+            up = -1;
+            middle = -1;
+        }
+        else if (length === 2) {
+            bottom = middle;
+            middle = up;
+            up = -1;
+        }
+        return { layer1: bottom, layer2: middle, layer3: up };
+    }
+    function findExactLayer(row, col, ind) {
+        var result = findLayer(row, col);
+        var up = result.layer3;
+        var middle = result.layer2;
+        var bottom = result.layer1;
+        if (ind === up) {
+            return 3;
+        }
+        else if (ind === middle) {
+            return 2;
+        }
+        else if (ind === bottom) {
+            return 1;
         }
     }
     // Helper Function: to find the neighbor cells related to the finger-pointed cell
-    function computeBlockDeltas(draggingStartedRowCol) {
-        if (!draggingStartedRowCol.isInBoard) {
+    function computeBlockDeltas(draggingStartedRowCol, isInBoard) {
+        if (!isInBoard) {
             if (draggingStartedRowCol.col === 0) {
                 game.blockDeltas = [
                     { deltaRow: 0, deltaCol: 1 },
@@ -155,113 +292,180 @@ var game;
     }
     // TODO: this function is too silly
     function computeBlockDeltasInBoard(draggingStartedRowCol) {
+        var tempBoardDragged = [];
+        // extend the board to initialize the boundary
+        for (var i = 0; i < gameLogic.ROWS + 4; i++) {
+            tempBoardDragged[i] = [];
+            for (var j = 0; j < gameLogic.COLS + 4; j++) {
+                // every cell in boardDragged is a map datastructure
+                // the key is the indication, the value is the color
+                tempBoardDragged[i][j] = {};
+            }
+        }
+        for (var i = 0; i < gameLogic.ROWS; i++) {
+            for (var j = 0; j < gameLogic.COLS; j++) {
+                // copy each boardDragged to tempBoardDragged
+                tempBoardDragged[i + 2][j + 2] = angular.copy(game.boardDragged[i][j]);
+            }
+        }
         var row = draggingStartedRowCol.row + 2;
         var col = draggingStartedRowCol.col + 2;
-        var value = draggingStartedRowCol.indication;
-        if (game.boardDragged[row - 1][col] === value) {
+        var ind = draggingStartedRowCol.indication;
+        //let value = boardDragged[row][col][ind];
+        if (tempBoardDragged[row - 1][col].hasOwnProperty(ind)) {
             // up 
-            if (game.boardDragged[row - 2][col] === value) {
+            if (tempBoardDragged[row - 2][col].hasOwnProperty(ind)) {
                 game.blockDeltas = [
                     { deltaRow: -1, deltaCol: 0 },
                     { deltaRow: -2, deltaCol: 0 }];
             }
-            else if (game.boardDragged[row + 1][col] === value) {
+            else if (tempBoardDragged[row + 1][col].hasOwnProperty(ind)) {
                 game.blockDeltas = [
                     { deltaRow: -1, deltaCol: 0 },
                     { deltaRow: 1, deltaCol: 0 }];
             }
+            game.isVertical = true;
         }
-        else if (game.boardDragged[row + 1][col] === value) {
+        else if (tempBoardDragged[row + 1][col].hasOwnProperty(ind)) {
             // down
-            if (game.boardDragged[row + 2][col] === value) {
+            if (tempBoardDragged[row + 2][col].hasOwnProperty(ind)) {
                 game.blockDeltas = [
                     { deltaRow: 1, deltaCol: 0 },
                     { deltaRow: 2, deltaCol: 0 }];
             }
-            else if (game.boardDragged[row - 1][col] === value) {
+            else if (tempBoardDragged[row - 1][col].hasOwnProperty(ind)) {
                 game.blockDeltas = [
                     { deltaRow: -1, deltaCol: 0 },
                     { deltaRow: 1, deltaCol: 0 }];
             }
+            game.isVertical = true;
         }
-        else if (game.boardDragged[row][col - 1] === value) {
+        else if (tempBoardDragged[row][col - 1].hasOwnProperty(ind)) {
             // left
-            if (game.boardDragged[row][col - 2] === value) {
+            if (tempBoardDragged[row][col - 2].hasOwnProperty(ind)) {
                 game.blockDeltas = [
                     { deltaRow: 0, deltaCol: -1 },
                     { deltaRow: 0, deltaCol: -2 }];
             }
-            else if (game.boardDragged[row][col + 1] === value) {
+            else if (tempBoardDragged[row][col + 1].hasOwnProperty(ind)) {
                 game.blockDeltas = [
                     { deltaRow: 0, deltaCol: -1 },
                     { deltaRow: 0, deltaCol: 1 }];
             }
         }
-        else if (game.boardDragged[row][col + 1] == value) {
+        else if (tempBoardDragged[row][col + 1].hasOwnProperty(ind)) {
             //right
-            if (game.boardDragged[row][col + 2] === value) {
+            if (tempBoardDragged[row][col + 2].hasOwnProperty(ind)) {
                 game.blockDeltas = [
                     { deltaRow: 0, deltaCol: 1 },
                     { deltaRow: 0, deltaCol: 2 }];
             }
-            else if (game.boardDragged[row][col - 1] === value) {
+            else if (tempBoardDragged[row][col - 1].hasOwnProperty(ind)) {
                 game.blockDeltas = [
                     { deltaRow: 0, deltaCol: -1 },
                     { deltaRow: 0, deltaCol: 1 }];
             }
         }
     }
+    // Helper Function: compute the hightest indication in specific cell
+    function computeIndicationAndLayer(row, col) {
+        var ind = -1;
+        var layer = 0;
+        for (var key in game.boardDragged[row][col]) {
+            if (game.boardDragged[row][col].hasOwnProperty(key)) {
+                if (parseInt(key) > ind) {
+                    ind = parseInt(key);
+                }
+            }
+            layer++;
+        }
+        return { ind: ind, layer: layer };
+    }
     // Helper Function: to get the HTMLElement of draggingPiece's neighbors
     function createDraggingPieceGroup(draggingStartedRowCol) {
+        // If the start dragging positon is in the preparedBox area
         if (!draggingStartedRowCol.isInBoard) {
+            // set the dragging piece
             game.draggingPiece = document.getElementById("MyPieceBox" + draggingStartedRowCol.row + "x" + draggingStartedRowCol.col);
             game.draggingPiece.style['z-index'] = 100;
             game.draggingPiece.style['width'] = game.boardArea.clientWidth / 8.0;
             game.draggingPiece.style['height'] = game.boardArea.clientWidth / 8.0;
+            // get the html element of the neighbors of draggingPiece
             for (var i = 0; i < game.blockDeltas.length; i++) {
                 var newRow = draggingStartedRowCol.row + game.blockDeltas[i].deltaRow;
                 var newCol = draggingStartedRowCol.col + game.blockDeltas[i].deltaCol;
-                log.info("this is piece box " + (i + 1) + " row: " + newRow + " col: " + newCol);
                 var newhtml = document.getElementById("MyPieceBox" + newRow + "x" + newCol);
-                newhtml.style['width'] = game.boardArea.clientWidth / 8.0;
-                newhtml.style['height'] = game.boardArea.clientWidth / 8.0;
-                newhtml.style['z-index'] = 100;
                 game.draggingPieceGroup[i] = newhtml;
             }
+            // set the css style of the neighbors of draggingPiece
+            setDraggingPieceGroupStyle();
         }
         else {
-            game.draggingPiece = document.getElementById("MyPiece" + draggingStartedRowCol.row + "x" + draggingStartedRowCol.col);
+            // If the start dragging position is in the board area
+            var layer = draggingStartedRowCol.layer;
+            game.draggingPiece = document.getElementById("MyPieceBoard_" + layer + "_Layer" + draggingStartedRowCol.row + "x" + draggingStartedRowCol.col);
+            // set the dragging piece
             game.draggingPiece.style['z-index'] = 100;
+            //draggingPiece.style.background = "pink";
+            // get the html element of the neighbors of draggingPiece
             for (var i = 0; i < game.blockDeltas.length; i++) {
                 var newRow = draggingStartedRowCol.row + game.blockDeltas[i].deltaRow;
                 var newCol = draggingStartedRowCol.col + game.blockDeltas[i].deltaCol;
-                log.info("this is piece " + (i + 1) + " row: " + newRow + " col: " + newCol);
-                var newhtml = document.getElementById("MyPiece" + newRow + "x" + newCol);
+                var exactLayer = findExactLayer(newRow, newCol, draggingStartedRowCol.indication);
+                var newhtml = document.getElementById("MyPieceBoard_" + exactLayer + "_Layer" + newRow + "x" + newCol);
                 newhtml.style['z-index'] = 100;
                 game.draggingPieceGroup[i] = newhtml;
             }
         }
     }
-    // Helper Function: set the top left of the draggingPiece group
-    function setDraggingPieceGroupTopLeft(draggingPieceCurTopLeft, needToShrink, isInBoard) {
+    // Helper Function: Change the UI of the dragging Piece, from big to small or otherwize
+    function setDraggingPieceGroupStyle() {
         var size;
-        var originalSize;
-        var originalTopLeft;
-        if (needToShrink) {
+        if (game.needToShrink) {
             size = getSquareWidthHeight_Box();
+            game.draggingPiece.style['width'] = size.width;
+            game.draggingPiece.style['height'] = size.height;
+            if (game.needToSettle) {
+                game.draggingPiece.style['z-index'] = -1;
+            }
+            else {
+                game.draggingPiece.style['z-index'] = 100;
+            }
         }
         else {
             size = getSquareWidthHeight();
         }
+        for (var i = 0; i < game.draggingPieceGroup.length; i++) {
+            game.draggingPieceGroup[i].style['width'] = size.width;
+            game.draggingPieceGroup[i].style['height'] = size.height;
+            if (game.needToSettle) {
+                game.draggingPieceGroup[i].style['z-index'] = -1;
+            }
+            else {
+                game.draggingPieceGroup[i].style['z-index'] = 100;
+            }
+        }
+    }
+    // Helper Function: set the top left of the draggingPiece group
+    function setDraggingPieceGroupTopLeft(draggingPieceCurTopLeft, isInBoard) {
+        var size;
+        var originalSize;
+        var originalTopLeft;
+        if (game.needToShrink) {
+            size = game.preparedSquareSize;
+        }
+        else {
+            size = game.boardSquareSize;
+        }
         if (isInBoard) {
-            setDraggingPieceTopLeft(game.draggingPiece, draggingPieceCurTopLeft, getSquareTopLeft_Box(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col));
+            setDraggingPieceTopLeft(game.draggingPiece, draggingPieceCurTopLeft, getSquareTopLeft(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col));
             originalTopLeft = getSquareTopLeft(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col);
-            originalSize = getSquareWidthHeight();
+            originalSize = game.boardSquareSize;
         }
         else {
             setDraggingPieceTopLeft(game.draggingPiece, draggingPieceCurTopLeft, getSquareTopLeft_Box(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col));
             originalTopLeft = getSquareTopLeft_Box(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col);
-            originalSize = getSquareWidthHeight_Box();
+            originalSize = game.preparedSquareSize;
         }
         for (var i = 0; i < game.blockDeltas.length; i++) {
             var originalTop = originalTopLeft.top + game.blockDeltas[i].deltaRow * originalSize.height;
@@ -283,19 +487,171 @@ var game;
         var size = getSquareWidthHeight_Box();
         return { top: game.boardArea.clientHeight * 0.91, left: row * game.boardArea.clientWidth * 0.35 + col * size.width };
     }
+    // Helper Funciton: do the drag done, clear the color in original place and put color in the new place
+    function dragDone(from, to, dest) {
+        var msg = "Dragged piece " + from.row + "x" + from.col + " to square " + to.row + "x" + to.col;
+        log.info(msg);
+        if (game.isVertical) {
+            // Piece is vertical 
+            if (dest === "PREPARED") {
+                // from board to prepared area
+                return;
+            }
+            else {
+                // from board to board
+                movePieceToBoard(from, to);
+            }
+        }
+        else {
+            // Piece is horizontal
+            if (dest === "PREPARED") {
+                if (game.state.preparedBox[to.row][to.col]) {
+                    // if the prepared box already has color, it's invalid to put the piece
+                    return;
+                }
+                // from board to prepared area
+                // from prepared to prepared
+                movePieceToPrepared(from, to);
+            }
+            if (dest === "BOARD") {
+                // from board to board
+                // from prepared to board
+                movePieceToBoard(from, to);
+            }
+        }
+    }
+    function movePieceToPrepared(from, to) {
+        if (game.blockDeltas[0].deltaCol === 1 && game.blockDeltas[1].deltaCol === 2) {
+            setPieceToFitPreparedArea(from, to, 0, [0, 1, 2]);
+        }
+        else if (game.blockDeltas[0].deltaCol === -1 && game.blockDeltas[1].deltaCol === 1) {
+            setPieceToFitPreparedArea(from, to, 1, [0, -1, 1]);
+        }
+        else if (game.blockDeltas[0].deltaCol === -2 && game.blockDeltas[1].deltaCol === -1) {
+            setPieceToFitPreparedArea(from, to, 2, [0, -2, -1]);
+        }
+        // clear the original color 
+        if (from.isInBoard) {
+            clearOriginalPieceInBoard(from);
+        }
+        else {
+            clearOriginalPieceInPrepared(from);
+        }
+    }
+    function setPieceToFitPreparedArea(from, to, realCol, colDelta) {
+        for (var i = 0; i < colDelta.length; i++) {
+            var delta = colDelta[i];
+            if (from.isInBoard) {
+                game.state.preparedBox[to.row][realCol + delta] = game.boardDragged[from.row][from.col + delta][from.indication];
+            }
+            else {
+                game.state.preparedBox[to.row][realCol + delta] = game.state.preparedBox[from.row][from.col + delta];
+            }
+        }
+    }
+    function movePieceToBoard(from, to) {
+        if (isInsideBoard(to.row, to.col, game.blockDeltas)) {
+            game.indication++;
+            if (from.isInBoard) {
+                game.boardDragged[to.row][to.col][game.indication] = game.boardDragged[from.row][from.col][from.indication];
+            }
+            else {
+                game.boardDragged[to.row][to.col][game.indication] = game.state.preparedBox[from.row][from.col];
+            }
+            for (var i = 0; i < game.blockDeltas.length; i++) {
+                var oldRow = from.row + game.blockDeltas[i].deltaRow;
+                var oldCol = from.col + game.blockDeltas[i].deltaCol;
+                var color = void 0;
+                if (from.isInBoard) {
+                    color = game.boardDragged[oldRow][oldCol][from.indication];
+                }
+                else {
+                    color = game.state.preparedBox[oldRow][oldCol];
+                }
+                var newRow = to.row + game.blockDeltas[i].deltaRow;
+                var newCol = to.col + game.blockDeltas[i].deltaCol;
+                game.boardDragged[newRow][newCol][game.indication] = color;
+            }
+            // clear the color in the original place
+            if (from.isInBoard) {
+                clearOriginalPieceInBoard(from);
+            }
+            else {
+                clearOriginalPieceInPrepared(from);
+            }
+        }
+        else {
+            return;
+        }
+    }
+    function clearOriginalPieceInBoard(from) {
+        delete game.boardDragged[from.row][from.col][from.indication];
+        for (var i = 0; i < game.blockDeltas.length; i++) {
+            var oldRow = from.row + game.blockDeltas[i].deltaRow;
+            var oldCol = from.col + game.blockDeltas[i].deltaCol;
+            // clear the color in the original place
+            delete game.boardDragged[oldRow][oldCol][from.indication];
+        }
+    }
+    function clearOriginalPieceInPrepared(from) {
+        game.state.preparedBox[from.row][from.col] = '';
+        var _loop_1 = function(i) {
+            var oldRow = from.row + game.blockDeltas[i].deltaRow;
+            var oldCol = from.col + game.blockDeltas[i].deltaCol;
+            // clear the color in the original place
+            //$timeout(function() {getPreparedBoxColor(oldRow, oldCol);},100);
+            game.state.preparedBox[oldRow][oldCol] = '';
+            $timeout(function () { game.state.preparedBox[oldRow][oldCol] = ''; }, 100);
+        };
+        for (var i = 0; i < game.blockDeltas.length; i++) {
+            _loop_1(i);
+        }
+    }
+    // Helper Function: initialize the boardDragged
+    function getInitialBoardDragged() {
+        for (var i = 0; i < gameLogic.ROWS; i++) {
+            game.boardDragged[i] = [];
+            for (var j = 0; j < gameLogic.COLS; j++) {
+                // put the original color of the board into boardDragged
+                // use the map datastructure to store the layer
+                game.boardDragged[i][j] = {};
+            }
+        }
+    }
     function getSquareWidthHeight() {
+        game.boardSquareSize = { height: game.boardArea.clientWidth / game.colsNum, width: game.boardArea.clientWidth / game.rowsNum };
         return {
-            width: game.boardArea.clientWidth / game.rowsNum,
-            height: game.boardArea.clientWidth / game.colsNum
+            height: game.boardArea.clientWidth / game.colsNum,
+            width: game.boardArea.clientWidth / game.rowsNum
         };
     }
     function getSquareWidthHeight_Box() {
+        game.preparedSquareSize = { height: game.boardArea.clientWidth * 0.9 / game.colsBox, width: game.boardArea.clientWidth * 0.9 / game.colsBox };
         return {
-            width: game.boardArea.clientWidth * 0.9 / game.colsBox,
-            height: game.boardArea.clientWidth * 0.9 / game.colsBox
+            height: game.boardArea.clientWidth * 0.9 / game.colsBox,
+            width: game.boardArea.clientWidth * 0.9 / game.colsBox
         };
     }
-    // Helper Function: to judge whether the neighbor cell is in the boardArea
+    function getInitialAllBoardLayer() {
+        for (var i = 0; i < gameLogic.ROWS; i++) {
+            game.boardLayer1[i] = [];
+            game.boardLayer2[i] = [];
+            game.boardLayer3[i] = [];
+            for (var j = 0; j < gameLogic.COLS; j++) {
+                game.boardLayer1[i][j] = '';
+                game.boardLayer2[i][j] = '';
+                game.boardLayer3[i][j] = '';
+            }
+        }
+    }
+    // function getSquareCenterXY(row: number, col: number) {
+    //     var size = getSquareWidthHeight();
+    //     return {
+    //         x: col * size.width + size.width / 2,
+    //         y: row * size.height + size.height / 2
+    //     };
+    // }
+    //Helper Function: to judge whether the neighbor cell is in the boardArea
     function isInsideBoard(row, col, blockDeltas) {
         for (var i = 0; i < blockDeltas.length; i++) {
             var delta = blockDeltas[i];
@@ -306,22 +662,6 @@ var game;
             }
         }
         return true;
-    }
-    // function getSquareCenterXY(row: number, col: number) {
-    //     var size = getSquareWidthHeight();
-    //     return {
-    //         x: col * size.width + size.width / 2,
-    //         y: row * size.height + size.height / 2
-    //     };
-    // }
-    function getInitialBoardDragged() {
-        // extend the board to initialize the boundary
-        for (var i = 0; i < gameLogic.ROWS + 2; i++) {
-            game.boardDragged[i] = [];
-            for (var j = 0; j < gameLogic.COLS + 2; j++) {
-                game.boardDragged[i][j] = 0;
-            }
-        }
     }
     //------------------------------------------------------------------------------------------------
     /**
@@ -355,23 +695,21 @@ var game;
     /**
      * When you click the cell in the game area, it will do a move operation and update of the UI
      */
-    function cellClicked(row, col, color) {
-        log.info("Clicked on cell:", row, col);
-        if (window.location.search === "?throwException") {
-            throw new Error("Throwing the error because URL has '?throwException'");
-        }
-        var nextMove = null;
-        try {
-            nextMove = gameLogic.createMove(game.state, [{ row: row, col: col, color: color }], game.currentUpdateUI.move.turnIndexAfterMove);
-        }
-        catch (e) {
-            log.info(["Cell is already full in position:", row, col]);
-            return;
-        }
-        // Move is legal, make it!
-        makeMove(nextMove);
-    }
-    game.cellClicked = cellClicked;
+    // export function cellClicked(row: number, col: number, color: string): void {
+    //     log.info("Clicked on cell:", row, col);
+    //     if (window.location.search === "?throwException") { // to test encoding a stack trace with sourcemap
+    //         throw new Error("Throwing the error because URL has '?throwException'");
+    //     }
+    //     let nextMove: IMove = null;
+    //     try {
+    //         nextMove = gameLogic.createMove(state, [{row: row, col: col, color: color}], currentUpdateUI.move.turnIndexAfterMove);
+    //     } catch (e) {
+    //         log.info(["Cell is already full in position:", row, col]);
+    //         return;
+    //     }
+    //     // Move is legal, make it!
+    //     makeMove(nextMove);
+    // }
     /**
      * To do the real move operation of the game;
      */
@@ -400,10 +738,6 @@ var game;
             game.animationEndedTimeout = null;
         }
     }
-    // function animationEndedCallback() {
-    //     log.info("Animation ended");
-    //     maybeSendComputerMove();
-    // }
     function isFirstMove() {
         log.log("this is the first move");
         return !game.currentUpdateUI.move.stateAfterMove;
@@ -418,52 +752,51 @@ var game;
         var cell = game.state.board[row][col];
         //log.info(typeof state);
         //log.info("this is the cell, row: " + row + " col: " + col + " color: " + cell);
-        return true;
+        return game.state.board[row][col] !== '';
     }
     game.shouldShowImage = shouldShowImage;
-    function isPieceR(row, col) {
-        return game.state.board[row][col] === 'R';
-    }
-    game.isPieceR = isPieceR;
-    function isPieceG(row, col) {
-        //log.info(state.board[row][col] === 'G');
-        return game.state.board[row][col] === 'G';
-    }
-    game.isPieceG = isPieceG;
-    function isPieceB(row, col) {
-        return game.state.board[row][col] === 'B';
-    }
-    game.isPieceB = isPieceB;
-    function isPieceY(row, col) {
-        return game.state.board[row][col] === 'Y';
-    }
-    game.isPieceY = isPieceY;
+    // export function isPieceR(row: number, col: number): boolean {      
+    //     return state.board[row][col] === 'R';
+    // }
+    // export function isPieceG(row: number, col: number): boolean {
+    //     //log.info(state.board[row][col] === 'G');
+    //     return state.board[row][col] === 'G';
+    // }
+    // export function isPieceB(row: number, col: number): boolean {
+    //     return state.board[row][col] === 'B';
+    // }
+    // export function isPieceY(row: number, col: number): boolean {
+    //     return state.board[row][col] === 'Y';
+    // }  
     function shouldShowImage_Box(row, col) {
-        var cell = game.state.board[row][col];
+        var cell = game.state.preparedBox[row][col];
         //log.info("this is the cell, row: " + row + " col: " + col + " color: " + state.preparedBox[row][col]);
-        return true;
+        return cell !== '';
     }
     game.shouldShowImage_Box = shouldShowImage_Box;
-    function isPieceR_Box(row, col) {
-        return game.state.preparedBox[row][col] === 'R';
-    }
-    game.isPieceR_Box = isPieceR_Box;
-    function isPieceG_Box(row, col) {
-        return game.state.preparedBox[row][col] === 'G';
-    }
-    game.isPieceG_Box = isPieceG_Box;
-    function isPieceB_Box(row, col) {
-        return game.state.preparedBox[row][col] === 'B';
-    }
-    game.isPieceB_Box = isPieceB_Box;
-    function isPieceY_Box(row, col) {
-        return game.state.preparedBox[row][col] === 'Y';
-    }
-    game.isPieceY_Box = isPieceY_Box;
-    // export function shouldSlowlyAppear(row: number, col: number): boolean {
-    //     return state.delta &&
-    //         state.delta.row === row && state.delta.col === col;
+    // export function isPieceR_Box(row: number, col: number): boolean {
+    //     return state.preparedBox[row][col] === 'R';
     // }
+    // export function isPieceG_Box(row: number, col: number): boolean {
+    //     return state.preparedBox[row][col] === 'G';
+    // }
+    // export function isPieceB_Box(row: number, col: number): boolean {
+    //     return state.preparedBox[row][col] === 'B';
+    // }
+    // export function isPieceY_Box(row: number, col: number): boolean {
+    //     return state.preparedBox[row][col] === 'Y';
+    // } 
+    function shouldSlowlyAppear(row, col) {
+        // return state.delta &&
+        //     state.delta.row === row && state.delta.col === col;
+        return true;
+    }
+    game.shouldSlowlyAppear = shouldSlowlyAppear;
+    function getBoardBoxColor(row, col) {
+        var cellStyle = game.state.board[row][col];
+        return cellStyle;
+    }
+    game.getBoardBoxColor = getBoardBoxColor;
     function getPreparedBoxColor(row, col) {
         var color = game.state.preparedBox[row][col];
         if (color === 'R') {
@@ -478,8 +811,42 @@ var game;
         else if (color === 'Y') {
             return "rgb(246, 246, 85)";
         }
+        else {
+            return "grey";
+        }
     }
     game.getPreparedBoxColor = getPreparedBoxColor;
+    function getBoardColorAt_1_Layer(row, col) {
+        var color = game.boardLayer1[row][col];
+        if (color === 'R') {
+            return "rgb(255, 128, 170)";
+        }
+        else if (color === 'G') {
+            return "rgb(71, 209, 71)";
+        }
+        else if (color === 'B') {
+            return "rgb(51, 204, 255)";
+        }
+        else if (color === 'Y') {
+            return "rgb(246, 246, 85)";
+        }
+        else {
+            return "grey";
+        }
+    }
+    game.getBoardColorAt_1_Layer = getBoardColorAt_1_Layer;
+    function getBoardColorAt_2_Layer(row, col) {
+        return game.boardLayer2[row][col];
+    }
+    game.getBoardColorAt_2_Layer = getBoardColorAt_2_Layer;
+    function getBoardColorAt_3_Layer(row, col) {
+        return game.boardLayer3[row][col];
+    }
+    game.getBoardColorAt_3_Layer = getBoardColorAt_3_Layer;
+    function getBoardColorAt_1_LayerShow(row, col) {
+        return true;
+    }
+    game.getBoardColorAt_1_LayerShow = getBoardColorAt_1_LayerShow;
 })(game || (game = {}));
 angular.module('myApp', ['gameServices'])
     .run(function () {
@@ -488,4 +855,12 @@ angular.module('myApp', ['gameServices'])
 });
 // what is updateUI, what is playmode
 // use enum to notate the right, left, top and down
+//TODO set draggin'S params CAN BE OPTIMIZED
+// map in the dragged board is a pit, delete may not work
+// TODO Z-INDEX need to do better, RECOMPUTE
+//TODO to compute the pass
+//TODO translation initialize
+// optimize compute delta in board
+// optimize map datastructure by length in each cell {length: 1}
+// clear board cell in original place 
 //# sourceMappingURL=game.js.map
