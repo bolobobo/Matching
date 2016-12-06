@@ -157,7 +157,7 @@ var game;
             // return the piece to it's original style (then angular will take care to hide it).
             if (!game.draggingStartedRowCol.isInBoard) {
                 game.needToShrink = true;
-                game.needToSettle = true;
+                //needToSettle = true;
                 setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col), game.draggingStartedRowCol.isInBoard);
                 setDraggingPieceGroupStyle();
             }
@@ -425,24 +425,26 @@ var game;
             size = getSquareWidthHeight_Box();
             game.draggingPiece.style['width'] = size.width;
             game.draggingPiece.style['height'] = size.height;
-            if (game.needToSettle) {
-                game.draggingPiece.style['z-index'] = -1;
-            }
-            else {
-                game.draggingPiece.style['z-index'] = 100;
-            }
+            // if(needToSettle) {
+            //     draggingPiece.style['z-index'] = -1;
+            // } else {
+            //     draggingPiece.style['z-index'] = 100;
+            // } 
+            game.draggingPiece.style['z-index'] = 100;
         }
         else {
             size = getSquareWidthHeight();
         }
         for (var i = 0; i < game.draggingPieceGroup.length; i++) {
-            game.draggingPieceGroup[i].style['width'] = size.width;
-            game.draggingPieceGroup[i].style['height'] = size.height;
+            // draggingPieceGroup[i].style['width'] = size.width;
+            // draggingPieceGroup[i].style['height'] = size.height;
             if (game.needToSettle) {
-                game.draggingPieceGroup[i].style['z-index'] = -1;
+                game.draggingPieceGroup[i].style['z-index'] = 60;
             }
             else {
                 game.draggingPieceGroup[i].style['z-index'] = 100;
+                game.draggingPieceGroup[i].style['width'] = size.width;
+                game.draggingPieceGroup[i].style['height'] = size.height;
             }
         }
     }
@@ -623,6 +625,12 @@ var game;
         return {
             height: game.boardArea.clientWidth / game.colsNum,
             width: game.boardArea.clientWidth / game.rowsNum
+        };
+    }
+    function getSquareWidthHeightSmall() {
+        return {
+            height: game.boardArea.clientWidth / game.colsNum * 0.96,
+            width: game.boardArea.clientWidth / game.rowsNum * 0.96
         };
     }
     function getSquareWidthHeight_Box() {

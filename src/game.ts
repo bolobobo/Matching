@@ -190,7 +190,7 @@ module game {
             // return the piece to it's original style (then angular will take care to hide it).
             if (!draggingStartedRowCol.isInBoard) {
                 needToShrink = true;
-                needToSettle = true;
+                //needToSettle = true;
                 setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(draggingStartedRowCol.row, draggingStartedRowCol.col), 
                 draggingStartedRowCol.isInBoard);
                 setDraggingPieceGroupStyle();
@@ -498,22 +498,28 @@ module game {
             size = getSquareWidthHeight_Box();
             draggingPiece.style['width'] = size.width;
             draggingPiece.style['height'] = size.height;
-            if(needToSettle) {
-                draggingPiece.style['z-index'] = -1;
-            } else {
-                draggingPiece.style['z-index'] = 100;
-            } 
+            // if(needToSettle) {
+            //     draggingPiece.style['z-index'] = -1;
+            // } else {
+            //     draggingPiece.style['z-index'] = 100;
+            // } 
+            draggingPiece.style['z-index'] = 100;
         } else {
             size = getSquareWidthHeight();
+
         }
 
         for (let i = 0; i < draggingPieceGroup.length; i++) {
-            draggingPieceGroup[i].style['width'] = size.width;
-            draggingPieceGroup[i].style['height'] = size.height;
+            // draggingPieceGroup[i].style['width'] = size.width;
+            // draggingPieceGroup[i].style['height'] = size.height;
             if(needToSettle) {
-                draggingPieceGroup[i].style['z-index'] = -1;
+                draggingPieceGroup[i].style['z-index'] = 60;
+                // draggingPieceGroup[i].style['width'] = size.width * 0.96;
+                // draggingPieceGroup[i].style['height'] = size.height * 0.96;  
             } else {
                 draggingPieceGroup[i].style['z-index'] = 100;
+                draggingPieceGroup[i].style['width'] = size.width;
+                draggingPieceGroup[i].style['height'] = size.height;
             } 
             //draggingPieceGroup[i].style['z-index'] = 100;
             //draggingPieceGroup[i].style.background = 'grey';
@@ -705,6 +711,13 @@ module game {
         return {
           height: boardArea.clientWidth / colsNum,
           width: boardArea.clientWidth / rowsNum
+        };
+    }
+
+    function getSquareWidthHeightSmall() : Size {
+        return {
+          height: boardArea.clientWidth / colsNum * 0.96,
+          width: boardArea.clientWidth / rowsNum * 0.96
         };
     }
 
