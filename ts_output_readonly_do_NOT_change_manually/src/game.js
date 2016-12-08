@@ -54,6 +54,144 @@ var game;
         dragAndDropService.addDragListener("boardArea", handleDragEvent);
     }
     game.init = init;
+    //------------------------------------------------------------------------------------------------
+    /**
+     * Define the different translation of the rule of the game
+     */
+    function getTranslations() {
+        return {};
+    }
+    /**
+     * When you intialize the game OR make a update of the game UI, should call this function.
+     */
+    function updateUI(params) {
+        log.info("Game got updateUI:", params);
+        game.didMakeMove = false; // only one move per updateUI
+        game.currentUpdateUI = params;
+        clearAnimationTimeout();
+        game.state = params.move.stateAfterMove;
+        if (isFirstMove()) {
+            game.state = gameLogic.getInitialState();
+            if (isMyTurn())
+                makeMove(gameLogic.createInitialMove());
+        }
+        else {
+            // We calculate the AI move only after the animation finishes,
+            // because if we call aiService now
+            // then the animation will be paused until the javascript finishes.
+            getInitialBoardDragged(); // initialize the boardDragged
+            getInitialAllBoardLayer(); // initialize all the boardLayer to store the color of each layer in board
+            game.animationEndedTimeout = $timeout(animationEndedCallback, 500);
+        }
+    }
+    game.updateUI = updateUI;
+    /**
+     * When you click the button outside the game area, it will do a move operation and update of the UI
+     */
+    function buttonClicked(row, col, color) {
+        log.info("Clicked on button=================");
+        if (window.location.search === "?throwException") {
+            throw new Error("Throwing the error because URL has '?throwException'");
+        }
+        // check the move is valid, the cell is only valid: 
+        // 1) each cell in board has no more than one color;
+        // 2) all the prepared boxes are on board;
+        if (!checkStartMoveIsValid()) {
+            alert("the move is invalid");
+            return;
+        }
+        var moves = generateMoves();
+        var nextMove = null;
+        try {
+            nextMove = gameLogic.createMove(game.state, moves, game.currentUpdateUI.move.turnIndexAfterMove);
+        }
+        catch (e) {
+            log.info(["Cell is already full in position:", row, col]);
+            return;
+        }
+        // Move is legal, make it!
+        makeMove(nextMove);
+    }
+    game.buttonClicked = buttonClicked;
+    /**
+     * To do the real move operation of the game;
+     */
+    function makeMove(move) {
+        log.log("this is make move");
+        if (game.didMakeMove) {
+            return;
+        }
+        game.didMakeMove = true;
+        moveService.makeMove(move);
+    }
+    /**
+     * Indicate that the update operation is done
+     */
+    function animationEndedCallback() {
+        log.info("Animation ended");
+        maybeSendComputerMove();
+    }
+    /**
+     * When you are going to do the update, call this to cancel the animation timeout
+     */
+    function clearAnimationTimeout() {
+        if (game.animationEndedTimeout) {
+            $timeout.cancel(game.animationEndedTimeout);
+            game.animationEndedTimeout = null;
+        }
+    }
+    function isFirstMove() {
+        log.log("this is the first move");
+        return !game.currentUpdateUI.move.stateAfterMove;
+    }
+    function isMyTurn() {
+        return !game.didMakeMove &&
+            game.currentUpdateUI.move.turnIndexAfterMove >= 0 &&
+            game.currentUpdateUI.yourPlayerIndex === game.currentUpdateUI.move.turnIndexAfterMove; // it's my turn
+    }
+    function isComputer() {
+        var playerInfo = game.currentUpdateUI.playersInfo[game.currentUpdateUI.yourPlayerIndex];
+        // In community games, playersInfo is [].
+        return playerInfo && playerInfo.playerId === '';
+    }
+    function isComputerTurn() {
+        return isMyTurn() && isComputer();
+    }
+    function maybeSendComputerMove() {
+        if (!isComputerTurn())
+            return;
+        var move = aiService.findComputerMove(game.currentUpdateUI.move);
+        log.info("Computer move: ", move);
+        makeMove(move);
+    }
+    //------------------------------------------------------------------------------------------------
+    // TODO: ADD OHTHER CONDITIONS
+    function checkStartMoveIsValid() {
+        for (var i = 0; i < gameLogic.ROWS; i++) {
+            for (var j = 0; j < gameLogic.COLS; j++) {
+                if (computeLength(i, j) > 1) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    function generateMoves() {
+        var moves = [];
+        var index = 0;
+        for (var i = 0; i < gameLogic.ROWS; i++) {
+            for (var j = 0; j < gameLogic.COLS; j++) {
+                if (computeLength(i, j) !== 0) {
+                    for (var key in game.boardDragged[i][j]) {
+                        moves[index] = { row: i, col: j, color: game.boardDragged[i][j][key] };
+                        index++;
+                    }
+                }
+            }
+        }
+        return moves;
+    }
+    //========================================================================================
     /**
      * Drag the piece from prepared area to the game board area
      * OR from board area to board area
@@ -157,7 +295,7 @@ var game;
             // return the piece to it's original style (then angular will take care to hide it).
             if (!game.draggingStartedRowCol.isInBoard) {
                 game.needToShrink = true;
-                game.needToSettle = true;
+                //needToSettle = true;
                 setDraggingPieceGroupTopLeft(getSquareTopLeft_Box(game.draggingStartedRowCol.row, game.draggingStartedRowCol.col), game.draggingStartedRowCol.isInBoard);
                 setDraggingPieceGroupStyle();
             }
@@ -425,24 +563,26 @@ var game;
             size = getSquareWidthHeight_Box();
             game.draggingPiece.style['width'] = size.width;
             game.draggingPiece.style['height'] = size.height;
-            if (game.needToSettle) {
-                game.draggingPiece.style['z-index'] = -1;
-            }
-            else {
-                game.draggingPiece.style['z-index'] = 100;
-            }
+            // if(needToSettle) {
+            //     draggingPiece.style['z-index'] = -1;
+            // } else {
+            //     draggingPiece.style['z-index'] = 100;
+            // } 
+            game.draggingPiece.style['z-index'] = 100;
         }
         else {
             size = getSquareWidthHeight();
         }
         for (var i = 0; i < game.draggingPieceGroup.length; i++) {
-            game.draggingPieceGroup[i].style['width'] = size.width;
-            game.draggingPieceGroup[i].style['height'] = size.height;
+            // draggingPieceGroup[i].style['width'] = size.width;
+            // draggingPieceGroup[i].style['height'] = size.height;
             if (game.needToSettle) {
-                game.draggingPieceGroup[i].style['z-index'] = -1;
+                game.draggingPieceGroup[i].style['z-index'] = 60;
             }
             else {
                 game.draggingPieceGroup[i].style['z-index'] = 100;
+                game.draggingPieceGroup[i].style['width'] = size.width;
+                game.draggingPieceGroup[i].style['height'] = size.height;
             }
         }
     }
@@ -625,6 +765,12 @@ var game;
             width: game.boardArea.clientWidth / game.rowsNum
         };
     }
+    function getSquareWidthHeightSmall() {
+        return {
+            height: game.boardArea.clientWidth / game.colsNum * 0.96,
+            width: game.boardArea.clientWidth / game.rowsNum * 0.96
+        };
+    }
     function getSquareWidthHeight_Box() {
         game.preparedSquareSize = { height: game.boardArea.clientWidth * 0.9 / game.colsBox, width: game.boardArea.clientWidth * 0.9 / game.colsBox };
         return {
@@ -663,108 +809,6 @@ var game;
         }
         return true;
     }
-    //------------------------------------------------------------------------------------------------
-    /**
-     * Define the different translation of the rule of the game
-     */
-    function getTranslations() {
-        return {};
-    }
-    /**
-     * When you intialize the game OR make a update of the game UI, should call this function.
-     */
-    function updateUI(params) {
-        log.info("Game got updateUI:", params);
-        game.didMakeMove = false; // only one move per updateUI
-        game.currentUpdateUI = params;
-        clearAnimationTimeout();
-        game.state = params.move.stateAfterMove;
-        if (isFirstMove()) {
-            game.state = gameLogic.getInitialState();
-            if (isMyTurn())
-                makeMove(gameLogic.createInitialMove());
-        }
-        else {
-            // We calculate the AI move only after the animation finishes,
-            // because if we call aiService now
-            // then the animation will be paused until the javascript finishes.
-            game.animationEndedTimeout = $timeout(animationEndedCallback, 500);
-        }
-    }
-    game.updateUI = updateUI;
-    /**
-     * When you click the cell in the game area, it will do a move operation and update of the UI
-     */
-    // export function cellClicked(row: number, col: number, color: string): void {
-    //     log.info("Clicked on cell:", row, col);
-    //     if (window.location.search === "?throwException") { // to test encoding a stack trace with sourcemap
-    //         throw new Error("Throwing the error because URL has '?throwException'");
-    //     }
-    //     let nextMove: IMove = null;
-    //     try {
-    //         nextMove = gameLogic.createMove(state, [{row: row, col: col, color: color}], currentUpdateUI.move.turnIndexAfterMove);
-    //     } catch (e) {
-    //         log.info(["Cell is already full in position:", row, col]);
-    //         return;
-    //     }
-    //     // Move is legal, make it!
-    //     makeMove(nextMove);
-    // }
-    /**
-     * To do the real move operation of the game;
-     */
-    function makeMove(move) {
-        log.log("this is make move");
-        if (game.didMakeMove) {
-            return;
-        }
-        game.didMakeMove = true;
-        moveService.makeMove(move);
-    }
-    //------------------------------------------------------------------------------------------------
-    /**
-     * Indicate that the update operation is done
-     */
-    function animationEndedCallback() {
-        log.info("Animation ended");
-        maybeSendComputerMove();
-    }
-    /**
-     * When you are going to do the update, call this to cancel the animation timeout
-     */
-    function clearAnimationTimeout() {
-        if (game.animationEndedTimeout) {
-            $timeout.cancel(game.animationEndedTimeout);
-            game.animationEndedTimeout = null;
-        }
-    }
-    function isFirstMove() {
-        log.log("this is the first move");
-        return !game.currentUpdateUI.move.stateAfterMove;
-    }
-    function isMyTurn() {
-        return !game.didMakeMove &&
-            game.currentUpdateUI.move.turnIndexAfterMove >= 0 &&
-            game.currentUpdateUI.yourPlayerIndex === game.currentUpdateUI.move.turnIndexAfterMove; // it's my turn
-    }
-    function isComputer() {
-        var playerInfo = game.currentUpdateUI.playersInfo[game.currentUpdateUI.yourPlayerIndex];
-        // In community games, playersInfo is [].
-        return playerInfo && playerInfo.playerId === '';
-    }
-    function isComputerTurn() {
-        return isMyTurn() && isComputer();
-    }
-    function isHumanTurn() {
-        return isMyTurn() && !isComputer();
-    }
-    function maybeSendComputerMove() {
-        if (!isComputerTurn())
-            return;
-        var move = aiService.findComputerMove(game.currentUpdateUI.move);
-        log.info("Computer move: ", move);
-        makeMove(move);
-    }
     // UI operation
     function shouldShowImage(row, col) {
         var cell = game.state.board[row][col];
@@ -773,37 +817,12 @@ var game;
         return game.state.board[row][col] !== '';
     }
     game.shouldShowImage = shouldShowImage;
-    // export function isPieceR(row: number, col: number): boolean {      
-    //     return state.board[row][col] === 'R';
-    // }
-    // export function isPieceG(row: number, col: number): boolean {
-    //     //log.info(state.board[row][col] === 'G');
-    //     return state.board[row][col] === 'G';
-    // }
-    // export function isPieceB(row: number, col: number): boolean {
-    //     return state.board[row][col] === 'B';
-    // }
-    // export function isPieceY(row: number, col: number): boolean {
-    //     return state.board[row][col] === 'Y';
-    // }  
     function shouldShowImage_Box(row, col) {
         var cell = game.state.preparedBox[row][col];
         //log.info("this is the cell, row: " + row + " col: " + col + " color: " + state.preparedBox[row][col]);
         return cell !== '';
     }
     game.shouldShowImage_Box = shouldShowImage_Box;
-    // export function isPieceR_Box(row: number, col: number): boolean {
-    //     return state.preparedBox[row][col] === 'R';
-    // }
-    // export function isPieceG_Box(row: number, col: number): boolean {
-    //     return state.preparedBox[row][col] === 'G';
-    // }
-    // export function isPieceB_Box(row: number, col: number): boolean {
-    //     return state.preparedBox[row][col] === 'B';
-    // }
-    // export function isPieceY_Box(row: number, col: number): boolean {
-    //     return state.preparedBox[row][col] === 'Y';
-    // } 
     function shouldSlowlyAppear(row, col) {
         // return state.delta &&
         //     state.delta.row === row && state.delta.col === col;
@@ -871,6 +890,31 @@ angular.module('myApp', ['gameServices'])
     $rootScope['game'] = game;
     game.init();
 });
+// export function isPieceR(row: number, col: number): boolean {      
+//     return state.board[row][col] === 'R';
+// }
+// export function isPieceG(row: number, col: number): boolean {
+//     //log.info(state.board[row][col] === 'G');
+//     return state.board[row][col] === 'G';
+// }
+// export function isPieceB(row: number, col: number): boolean {
+//     return state.board[row][col] === 'B';
+// }
+// export function isPieceY(row: number, col: number): boolean {
+//     return state.board[row][col] === 'Y';
+// } 
+// export function isPieceR_Box(row: number, col: number): boolean {
+//     return state.preparedBox[row][col] === 'R';
+// }
+// export function isPieceG_Box(row: number, col: number): boolean {
+//     return state.preparedBox[row][col] === 'G';
+// }
+// export function isPieceB_Box(row: number, col: number): boolean {
+//     return state.preparedBox[row][col] === 'B';
+// }
+// export function isPieceY_Box(row: number, col: number): boolean {
+//     return state.preparedBox[row][col] === 'Y';
+// }  
 // what is updateUI, what is playmode
 // use enum to notate the right, left, top and down
 //TODO set draggin'S params CAN BE OPTIMIZED
