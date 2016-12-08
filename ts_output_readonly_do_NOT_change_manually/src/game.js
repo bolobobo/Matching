@@ -159,6 +159,7 @@ var game;
                 }
             }
         }
+        return true;
     }
     function generateMoves() {
         var moves = [];
