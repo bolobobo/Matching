@@ -159,7 +159,7 @@ module game {
      */
     function animationEndedCallback() {
         log.info("Animation ended");
-        //maybeSendComputerMove();
+        maybeSendComputerMove();
     }
 
     /**
@@ -184,6 +184,23 @@ module game {
     }
 
 
+    function isComputer() {
+        var playerInfo = game.currentUpdateUI.playersInfo[game.currentUpdateUI.yourPlayerIndex];
+        // In community games, playersInfo is [].
+        return playerInfo && playerInfo.playerId === '';
+    }
+
+    function isComputerTurn() {
+        return isMyTurn() && isComputer();
+    }
+
+    function maybeSendComputerMove() {
+        if (!isComputerTurn())
+            return;
+        var move = aiService.findComputerMove(game.currentUpdateUI.move);
+        log.info("Computer move: ", move);
+        makeMove(move);
+    }
 //------------------------------------------------------------------------------------------------
     // TODO: ADD OHTHER CONDITIONS
     function checkStartMoveIsValid(): boolean {

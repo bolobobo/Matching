@@ -125,13 +125,13 @@ var gameLogic;
     }
     function checkBoardAvailable(board, numPlaced) {
         if (numPlaced === 3) {
-            log.log("numPlaced === 3");
+            //log.log("numPlaced === 3")
             return true;
         }
         for (var i = 0; i < board.length; i++) {
             for (var j = 0; j < board[i].length; j++) {
                 if (checkCanPlace(board, i, j)) {
-                    log.log("can place in " + i + " , " + j);
+                    //log.log("can place in "+ i + " , " + j)
                     numPlaced += 1;
                     if (checkBoardAvailable(board, numPlaced)) {
                         return true;
@@ -149,10 +149,10 @@ var gameLogic;
     */
     function checkCanPlace(board, row, col) {
         if (board[row][col] === "") {
-            if (row > board.length - 2 && col > board.length - 2) {
+            if (row >= board.length - 2 && col >= board.length - 2) {
                 return false;
             }
-            if (row <= board.length - 2) {
+            if (row < board.length - 2) {
                 if (board[row + 1][col] === "" && board[row + 2][col] === "") {
                     board[row][col] = "X";
                     board[row + 1][col] = "X";
@@ -160,7 +160,7 @@ var gameLogic;
                     return true;
                 }
             }
-            if (col <= board.length - 2) {
+            if (col < board.length - 2) {
                 if (board[row][col + 1] === "" && board[row][col + 2] === "") {
                     board[row][col] = "X";
                     board[row][col + 1] = "X";
@@ -171,6 +171,7 @@ var gameLogic;
         }
         return false;
     }
+    gameLogic.checkCanPlace = checkCanPlace;
     /**
      * Return the winner (either 0, 1 ,2...) or '' if there is no winner (because they have the same score);
      * getWinner will return the player with the highest score at the final turn or when there is a tie state;
