@@ -194,6 +194,7 @@ module game {
                 }
             }
         }
+        return true;
     }
 
     function generateMoves(): BoardDelta[] {
