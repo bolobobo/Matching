@@ -59,7 +59,8 @@ var gameLogic;
         }
     }
     function getInitialState() {
-        return { board: getInitialBoard(), delta: null, currentScores: getInitialScores(), currentTurn: 0 };
+        log.log("this is getInitialState");
+        return { board: getInitialBoard(), delta: [], currentScores: getInitialScores(), currentTurn: 0, preparedBox: generatePreparedBox() };
     }
     gameLogic.getInitialState = getInitialState;
     function getInitialScores() {
@@ -92,10 +93,10 @@ var gameLogic;
      *  ['R', 'G', 'B', 'R', 'G', 'B', ' ', 'G'],
      *  ['G', 'B', 'R', 'G', 'B', 'R', 'G', 'R']]
      */
-    // Note: TODO: Debby 
+    // Note: TODO: Debby
     // to judge whether this board has enough space to put 3 prepared box(I mean 9 cells)
     // not just 9 non-connected empty cells
-    // Suggestion: you can use DFS to do it, 
+    // Suggestion: you can use DFS to do it,
     // recursion may cause memory proplem
     //
     // returns true if there is not enough space to put the 3 boxes, false otherwise
@@ -111,7 +112,7 @@ var gameLogic;
                 }
             }
         }
-        //   check if there are at least 9 empty cells on the board 
+        //   check if there are at least 9 empty cells on the board
         //   regardless of there relative position to each other
         if (numEmpty < 9) {
             log.log("numEmply < 9 ");
@@ -124,13 +125,13 @@ var gameLogic;
     }
     function checkBoardAvailable(board, numPlaced) {
         if (numPlaced === 3) {
-            log.log("numPlaced === 3");
+            //log.log("numPlaced === 3")
             return true;
         }
         for (var i = 0; i < board.length; i++) {
             for (var j = 0; j < board[i].length; j++) {
                 if (checkCanPlace(board, i, j)) {
-                    log.log("can place in " + i + " , " + j);
+                    //log.log("can place in "+ i + " , " + j)
                     numPlaced += 1;
                     if (checkBoardAvailable(board, numPlaced)) {
                         return true;
@@ -141,17 +142,17 @@ var gameLogic;
         return false;
     }
     /**
-     * if row > board.length-2 : only check right
-     * if col > board.length-2 : only check down
-     * if row > board.length-2 && col > board.length-2, return false,
-     *    bracuase at this point the last 4 tiles are already checked
-     */
+    * if row > board.length-2 : only check right
+    * if col > board.length-2 : only check down
+    * if row > board.length-2 && col > board.length-2, return false,
+    *    bracuase at this point the last 4 tiles are already checked
+    */
     function checkCanPlace(board, row, col) {
         if (board[row][col] === "") {
-            if (row > board.length - 2 && col > board.length - 2) {
+            if (row >= board.length - 2 && col >= board.length - 2) {
                 return false;
             }
-            if (row <= board.length - 2) {
+            if (row < board.length - 2) {
                 if (board[row + 1][col] === "" && board[row + 2][col] === "") {
                     board[row][col] = "X";
                     board[row + 1][col] = "X";
@@ -159,7 +160,7 @@ var gameLogic;
                     return true;
                 }
             }
-            if (col <= board.length - 2) {
+            if (col < board.length - 2) {
                 if (board[row][col + 1] === "" && board[row][col + 2] === "") {
                     board[row][col] = "X";
                     board[row][col + 1] = "X";
@@ -170,6 +171,7 @@ var gameLogic;
         }
         return false;
     }
+    gameLogic.checkCanPlace = checkCanPlace;
     /**
      * Return the winner (either 0, 1 ,2...) or '' if there is no winner (because they have the same score);
      * getWinner will return the player with the highest score at the final turn or when there is a tie state;
@@ -238,6 +240,7 @@ var gameLogic;
             turnIndexAfterMove = currentTurnIndex;
             endMatchScores = stateAfterMove.currentScores;
         }
+        log.log("this is create move");
         return { endMatchScores: endMatchScores, turnIndexAfterMove: turnIndexAfterMove, stateAfterMove: stateAfterMove };
     }
     gameLogic.createMove = createMove;
@@ -269,7 +272,7 @@ var gameLogic;
     // Note: if it doesn't work, can change the length of board to 8
     function computeCurrentTurnScore(board) {
         // initialize the boundary of the board in order to compute score easily
-        // so we need not to consider the boundary condition of the board 
+        // so we need not to consider the boundary condition of the board
         var boardWithBoundary = [];
         var currentTurnScore = 0;
         for (var i = 0; i < gameLogic.ROWS + 2; i++) {
@@ -422,13 +425,17 @@ var gameLogic;
     /**
      * Generate the 3 prepared box for the player, one time just generate one box containing 3 cells
      */
-    function generatePreparedCells() {
-        var preparedBox = [];
+    function generatePreparedBox() {
+        var box = [];
         for (var i = 0; i < 3; i++) {
-            preparedBox[i] = getRandomColor();
+            box[i] = [];
+            for (var j = 0; j < 3; j++) {
+                box[i][j] = 'G';
+            }
         }
-        return preparedBox;
+        //log.log("this is generatePreparedBox");
+        return box;
     }
-    gameLogic.generatePreparedCells = generatePreparedCells;
+    gameLogic.generatePreparedBox = generatePreparedBox;
 })(gameLogic || (gameLogic = {}));
 //# sourceMappingURL=gameLogic.js.map
