@@ -150,8 +150,15 @@ var game;
             game.currentUpdateUI.yourPlayerIndex === game.currentUpdateUI.move.turnIndexAfterMove; // it's my turn
     }
     //------------------------------------------------------------------------------------------------
+    // TODO: ADD OHTHER CONDITIONS
     function checkStartMoveIsValid() {
-        return true;
+        for (var i = 0; i < gameLogic.ROWS; i++) {
+            for (var j = 0; j < gameLogic.COLS; j++) {
+                if (computeLength(i, j) > 1) {
+                    return false;
+                }
+            }
+        }
     }
     function generateMoves() {
         var moves = [];

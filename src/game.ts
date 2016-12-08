@@ -185,8 +185,15 @@ module game {
 
 
 //------------------------------------------------------------------------------------------------
+    // TODO: ADD OHTHER CONDITIONS
     function checkStartMoveIsValid(): boolean {
-        return true;
+        for (let i = 0; i < gameLogic.ROWS; i++) {
+            for (let j = 0; j < gameLogic.COLS; j++) {
+                if (computeLength(i, j) > 1) {
+                    return false;
+                }
+            }
+        }
     }
 
     function generateMoves(): BoardDelta[] {
