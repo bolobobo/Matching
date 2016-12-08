@@ -829,7 +829,7 @@ module game {
      */
     function animationEndedCallback() {
         log.info("Animation ended");
-        //maybeSendComputerMove();
+        maybeSendComputerMove();
     }
 
     /**
@@ -853,6 +853,28 @@ module game {
         return !didMakeMove && // you can only make one move per updateUI.
             currentUpdateUI.move.turnIndexAfterMove >= 0 && // game is ongoing
             currentUpdateUI.yourPlayerIndex === currentUpdateUI.move.turnIndexAfterMove; // it's my turn
+    }
+
+    function isComputer() {
+        var playerInfo = game.currentUpdateUI.playersInfo[game.currentUpdateUI.yourPlayerIndex];
+        // In community games, playersInfo is [].
+        return playerInfo && playerInfo.playerId === '';
+    }
+
+    function isComputerTurn() {
+        return isMyTurn() && isComputer();
+    }
+
+    function isHumanTurn() {
+        return isMyTurn() && !isComputer();
+    }
+
+    function maybeSendComputerMove() {
+        if (!isComputerTurn())
+            return;
+        var move = aiService.findComputerMove(game.currentUpdateUI.move);
+        log.info("Computer move: ", move);
+        makeMove(move);
     }
 
 

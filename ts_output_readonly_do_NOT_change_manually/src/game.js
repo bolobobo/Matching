@@ -727,7 +727,7 @@ var game;
      */
     function animationEndedCallback() {
         log.info("Animation ended");
-        //maybeSendComputerMove();
+        maybeSendComputerMove();
     }
     /**
      * When you are going to do the update, call this to cancel the animation timeout
@@ -746,6 +746,24 @@ var game;
         return !game.didMakeMove &&
             game.currentUpdateUI.move.turnIndexAfterMove >= 0 &&
             game.currentUpdateUI.yourPlayerIndex === game.currentUpdateUI.move.turnIndexAfterMove; // it's my turn
+    }
+    function isComputer() {
+        var playerInfo = game.currentUpdateUI.playersInfo[game.currentUpdateUI.yourPlayerIndex];
+        // In community games, playersInfo is [].
+        return playerInfo && playerInfo.playerId === '';
+    }
+    function isComputerTurn() {
+        return isMyTurn() && isComputer();
+    }
+    function isHumanTurn() {
+        return isMyTurn() && !isComputer();
+    }
+    function maybeSendComputerMove() {
+        if (!isComputerTurn())
+            return;
+        var move = aiService.findComputerMove(game.currentUpdateUI.move);
+        log.info("Computer move: ", move);
+        makeMove(move);
     }
     // UI operation
     function shouldShowImage(row, col) {

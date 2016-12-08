@@ -153,13 +153,13 @@ module gameLogic {
 
     function checkBoardAvailable(board: Board, numPlaced: number):boolean{       
         if (numPlaced === 3){
-            log.log("numPlaced === 3")
+            //log.log("numPlaced === 3")
             return true
         }
         for(let i = 0; i < board.length; i++){
             for(let j=0; j < board[i].length; j++){
                 if(checkCanPlace(board, i, j)){
-                    log.log("can place in "+ i + " , " + j)
+                    //log.log("can place in "+ i + " , " + j)
                     numPlaced+=1
                     if(checkBoardAvailable(board, numPlaced)){
                         return true;
@@ -177,12 +177,12 @@ module gameLogic {
 *    bracuase at this point the last 4 tiles are already checked
 */
 
-    function checkCanPlace(board:Board, row:number, col:number): boolean{
+    export function checkCanPlace(board:Board, row:number, col:number): boolean{
         if (board[row][col]===""){            
-            if(row > board.length-2 && col > board.length-2){          
+            if(row >= board.length-2 && col >= board.length-2){          
                 return false;
             }
-            if(row <= board.length-2){
+            if(row < board.length-2){
                 if(board[row+1][col]==="" && board[row+2][col]===""){
                     board[row][col] = "X";
                     board[row+1][col] = "X";
@@ -190,7 +190,7 @@ module gameLogic {
                     return true
                 }
             }
-            if(col <= board.length-2){
+            if(col < board.length-2){
                 if(board[row][col+1]==="" && board[row][col+2]===""){
                     board[row][col] = "X";                    
                     board[row][col+1] = "X";
