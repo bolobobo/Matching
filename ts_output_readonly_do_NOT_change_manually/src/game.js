@@ -897,15 +897,15 @@ var game;
         return true;
     }
     game.getBoardColorAt_1_LayerShow = getBoardColorAt_1_LayerShow;
-    function getCurrentPlayerScore() {
+    function getOpponentPlayerScore() {
         return game.state.currentScores[game.currentUpdateUI.yourPlayerIndex];
     }
-    game.getCurrentPlayerScore = getCurrentPlayerScore;
-    function getOpponentPlayerScore() {
+    game.getOpponentPlayerScore = getOpponentPlayerScore;
+    function getCurrentPlayerScore() {
         var opponentPlayerIndex = 1 - game.currentUpdateUI.yourPlayerIndex;
         return game.state.currentScores[opponentPlayerIndex];
     }
-    game.getOpponentPlayerScore = getOpponentPlayerScore;
+    game.getCurrentPlayerScore = getCurrentPlayerScore;
 })(game || (game = {}));
 angular.module('myApp', ['gameServices'])
     .run(function () {

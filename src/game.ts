@@ -1007,10 +1007,10 @@ module game {
         return true;
     }
 
-    export function getCurrentPlayerScore(): number {
+    export function getOpponentPlayerScore(): number {
         return state.currentScores[currentUpdateUI.yourPlayerIndex];
     }
-    export function getOpponentPlayerScore(): number {
+    export function getCurrentPlayerScore(): number {
         let opponentPlayerIndex: number = 1 - currentUpdateUI.yourPlayerIndex;
         return state.currentScores[opponentPlayerIndex];
     }
