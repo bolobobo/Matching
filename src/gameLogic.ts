@@ -495,8 +495,6 @@ module gameLogic {
         return box;
     }
 
-
-
     //TODO: Add the community function to make two group of people can play the same game
     // use proposal and majority
 

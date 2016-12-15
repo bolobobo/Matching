@@ -59,7 +59,20 @@ var game;
      * Define the different translation of the rule of the game
      */
     function getTranslations() {
-        return {};
+        return {
+            LEFT_TURNS: {
+                en: "Turns left",
+                zh: "剩余回合"
+            },
+            YOUR_SCORE: {
+                en: "Current",
+                zh: "当前分数",
+            },
+            OPPONENT_SCORE: {
+                en: "Opponent",
+                zh: "对手",
+            }
+        };
     }
     /**
      * When you intialize the game OR make a update of the game UI, should call this function.
@@ -884,6 +897,15 @@ var game;
         return true;
     }
     game.getBoardColorAt_1_LayerShow = getBoardColorAt_1_LayerShow;
+    function getCurrentPlayerScore() {
+        return game.state.currentScores[game.currentUpdateUI.yourPlayerIndex];
+    }
+    game.getCurrentPlayerScore = getCurrentPlayerScore;
+    function getOpponentPlayerScore() {
+        var opponentPlayerIndex = 1 - game.currentUpdateUI.yourPlayerIndex;
+        return game.state.currentScores[opponentPlayerIndex];
+    }
+    game.getOpponentPlayerScore = getOpponentPlayerScore;
 })(game || (game = {}));
 angular.module('myApp', ['gameServices'])
     .run(function () {

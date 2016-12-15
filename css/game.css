@@ -130,6 +130,13 @@ html, body {
     font-weight: 900;
 } 
 
+.currentPlayer {
+  color: #20B2AA;  
+}
+
+.opponentPlayer {
+  color: #20B2AA;  
+}
 #gameHelper button{
     border: 1px grey;
     border-radius: 5%;

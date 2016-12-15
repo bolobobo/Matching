@@ -86,7 +86,20 @@ module game {
      * Define the different translation of the rule of the game
      */
     function getTranslations(): Translations {
-        return {};
+        return {      
+            LEFT_TURNS: {
+                en: "Turns left",
+                zh: "剩余回合"
+            },
+            YOUR_SCORE: {
+                en: "Current",
+                zh: "当前分数",
+            },
+            OPPONENT_SCORE: {
+                en: "Opponent",
+                zh: "对手",
+            }
+        };
     }
 
     /**
@@ -992,6 +1005,14 @@ module game {
 
     export function getBoardColorAt_1_LayerShow(row: number, col: number): boolean {
         return true;
+    }
+
+    export function getCurrentPlayerScore(): number {
+        return state.currentScores[currentUpdateUI.yourPlayerIndex];
+    }
+    export function getOpponentPlayerScore(): number {
+        let opponentPlayerIndex: number = 1 - currentUpdateUI.yourPlayerIndex;
+        return state.currentScores[opponentPlayerIndex];
     }
 }
 
