@@ -1014,6 +1014,9 @@ module game {
         let opponentPlayerIndex: number = 1 - currentUpdateUI.yourPlayerIndex;
         return state.currentScores[opponentPlayerIndex];
     }
+    export function getCurrentTurn(): number {
+        return 11-Math.floor(game.state.currentTurn/2);
+    }
 }
 
 angular.module('myApp', ['gameServices'])

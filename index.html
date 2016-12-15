@@ -41,7 +41,7 @@
                     {{ 'YOUR_SCORE' | translate }}: {{game.getCurrentPlayerScore()}}
                 </div>
                 <div class="div-inline2">
-                    &nbsp;&nbsp;{{'LEFT_TURNS' | translate}} : {{11-game.state.currentTurn}}&nbsp;&nbsp;
+                    &nbsp;&nbsp;{{'LEFT_TURNS' | translate}} : {{game.getCurrentTurn()}}&nbsp;&nbsp;
                 </div> 
                 <div class="div-inline3 opponentPlayer" 
                 ng-if="!game.isPassAndPlay()" 

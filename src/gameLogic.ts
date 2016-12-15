@@ -24,7 +24,7 @@ module gameLogic {
     export const ROWS = 8;
     export const COLS = 8;
     export const PLAYERNUM = 2
-    export const TOTALTURNS = 11;
+    export const TOTALTURNS = 22;
     export const COLORNUM = 4;
 
     /** Returns the initial Matching board, which is a ROWSxCOLS matrix containing 7 different color blocks */

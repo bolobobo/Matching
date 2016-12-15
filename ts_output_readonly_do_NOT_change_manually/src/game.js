@@ -906,6 +906,10 @@ var game;
         return game.state.currentScores[opponentPlayerIndex];
     }
     game.getCurrentPlayerScore = getCurrentPlayerScore;
+    function getCurrentTurn() {
+        return 11 - Math.floor(game.state.currentTurn / 2);
+    }
+    game.getCurrentTurn = getCurrentTurn;
 })(game || (game = {}));
 angular.module('myApp', ['gameServices'])
     .run(function () {
