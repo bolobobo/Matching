@@ -222,12 +222,21 @@ module game {
 //------------------------------------------------------------------------------------------------
     // TODO: ADD OHTHER CONDITIONS
     function checkStartMoveIsValid(): boolean {
+        let count: number = 0;
         for (let i = 0; i < gameLogic.ROWS; i++) {
             for (let j = 0; j < gameLogic.COLS; j++) {
+                // check whether there are more than one piece in the same cell
                 if (computeLength(i, j) > 1) {
                     return false;
                 }
+                if (computeLength(i, j) == 1) {
+                    count++;
+                }
             }
+        }
+        // check whether all the prepard boxes have already been in board
+        if (count != 9) {
+            return false;
         }
         return true;
     }
@@ -875,40 +884,6 @@ module game {
         }
         // clear the color in the original place
         clearOriginalPieceInBoard(from);
-        
-        //     if (isInsideBoard(to.row, to.col, blockDeltas)) {
-        //     indication++;
-        //     if (from.isInBoard) {
-        //         boardDragged[to.row][to.col][indication] = boardDragged[from.row][from.col][from.indication];
-        //     } else {
-        //         boardDragged[to.row][to.col][indication] = state.preparedBox[from.row][from.col];
-        //     }
-            
-        //     for (let i = 0; i < blockDeltas.length; i++) {
-        //         let oldRow = from.row + blockDeltas[i].deltaRow;
-        //         let oldCol = from.col + blockDeltas[i].deltaCol;
-        //         let color: string;
-
-        //         if (from.isInBoard) {
-        //             color = boardDragged[oldRow][oldCol][from.indication];
-        //         } else {
-        //             color = state.preparedBox[oldRow][oldCol];
-        //         }
-                  
-        //         let newRow = to.row + blockDeltas[i].deltaRow;
-        //         let newCol = to.col + blockDeltas[i].deltaCol;
-        //         boardDragged[newRow][newCol][indication] = color;
-        //     }
-        //     // clear the color in the original place
-        //     if (from.isInBoard) {
-        //         clearOriginalPieceInBoard(from);
-        //     } else {
-        //         clearOriginalPieceInPrepared(from);
-        //     }
-            
-        // } else {
-        //     return;
-        // }
     }
 
 
