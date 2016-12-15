@@ -46,7 +46,6 @@ module game {
     export let draggingPiece: any = null;
     export let draggingPieceGroup: any[] = [];
     export let boardDragged: any = []; // to record which box has been moved to the board
-    //export let boardRotated: any = []; // to record which box has been rotated and the direction
     export let indication: number; // to indicate the cells in the same box when they are moved to board
     export let needToShrink: boolean = false; // At begginning, do not need to Shrink
     export let needToSettle: boolean = false;
@@ -102,6 +101,10 @@ module game {
             OPPONENT_SCORE: {
                 en: "Opponent",
                 zh: "对手",
+            },
+            CONFIRM: {
+                en: "Confirm",
+                zh: "确认",
             }
         };
     }
@@ -1148,6 +1151,22 @@ module game {
 
     export function getCurrentTurn(): number {
         return 11-Math.floor(game.state.currentTurn/2);
+    }
+
+    export function getMultiple(row: number, col: number): string {
+        if (row === 2 && col === 2) {
+            return '2';
+        }
+        if (row === 2 && col === 5) {
+            return '2';
+        }
+        if (row === 5 && col === 2) {
+            return '2';
+        }
+        if (row === 5 && col === 5) {
+            return '2';
+        }
+        return '';
     }
 }
 

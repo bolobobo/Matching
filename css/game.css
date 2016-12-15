@@ -32,12 +32,14 @@ textarea, input {
   /*border: 0.5px solid grey;*/
   background-color: rgb(255, 128, 170);
   border-radius: 10%;
+  /*opacity: 0.8;*/
 }
 
 .G {
-  border: 1% solid grey;
+  border: 12% solid grey;
   background-color: rgb(71, 209, 71);
   border-radius: 10%;
+  /*opacity: 0.8;*/
 }
 
 .B {
@@ -51,6 +53,7 @@ textarea, input {
   /*border: 0.5px solid grey;*/
   background-color: rgb(246, 246, 85);
   border-radius: 10%;
+  /*opacity: 0.8;*/
 }
 
 
@@ -145,6 +148,14 @@ html, body {
 .rowBox {
     border-left: 1px grey;
     background-color: lightgoldenrodyellow;
+}
+
+.multiple {
+    margin: 15%;
+    text-align: center;
+    font-family: Georgia;
+    font-size: 2em;
+    color: lightgrey;
 }
 
 img {

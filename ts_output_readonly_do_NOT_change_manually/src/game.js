@@ -72,6 +72,10 @@ var game;
             OPPONENT_SCORE: {
                 en: "Opponent",
                 zh: "对手",
+            },
+            CONFIRM: {
+                en: "Confirm",
+                zh: "确认",
             }
         };
     }
@@ -1031,6 +1035,22 @@ var game;
         return 11 - Math.floor(game.state.currentTurn / 2);
     }
     game.getCurrentTurn = getCurrentTurn;
+    function getMultiple(row, col) {
+        if (row === 2 && col === 2) {
+            return '2';
+        }
+        if (row === 2 && col === 5) {
+            return '2';
+        }
+        if (row === 5 && col === 2) {
+            return '2';
+        }
+        if (row === 5 && col === 5) {
+            return '2';
+        }
+        return '';
+    }
+    game.getMultiple = getMultiple;
 })(game || (game = {}));
 angular.module('myApp', ['gameServices'])
     .run(function () {

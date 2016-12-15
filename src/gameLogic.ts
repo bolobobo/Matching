@@ -304,7 +304,7 @@ module gameLogic {
         stateAfterMove.delta = angular.copy(moves);
         // compute the score and change the board
         let res = computeCurrentTurnScore(stateAfterMove.board);
-        stateAfterMove.currentScores[currentTurnIndex] = res.score + stateAfterMove.currentScores[currentTurnIndex];
+        stateAfterMove.currentScores[currentTurnIndex] = res.score * 10 + stateAfterMove.currentScores[currentTurnIndex];
         stateAfterMove.board = res.board;
         stateAfterMove.preparedBox = generatePreparedBox();
         return stateAfterMove;
@@ -489,6 +489,11 @@ module gameLogic {
             box[i] = [];
             for (let j = 0; j < 3; j++) {
                 box[i][j] = getRandomColor();
+                if (j === 2) {
+                    while (box[i][j] === box[i][j-1] && box[i][j] === box[i][j-2]) {
+                        box[i][j] = getRandomColor();
+                    }
+                }
             }  
         }
         //log.log("this is generatePreparedBox");
