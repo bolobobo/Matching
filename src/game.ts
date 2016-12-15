@@ -1150,7 +1150,7 @@ module game {
     }
 
     export function getCurrentTurn(): number {
-        return 11-Math.floor(game.state.currentTurn/2);
+        return 5-Math.floor(game.state.currentTurn/2);
     }
 
     export function getMultiple(row: number, col: number): string {
