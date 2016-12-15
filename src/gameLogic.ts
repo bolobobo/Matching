@@ -304,7 +304,7 @@ module gameLogic {
         stateAfterMove.delta = angular.copy(moves);
         // compute the score and change the board
         let res = computeCurrentTurnScore(stateAfterMove.board);
-        stateAfterMove.currentScores[currentTurnIndex] = res.score;
+        stateAfterMove.currentScores[currentTurnIndex] = res.score + stateAfterMove.currentScores[currentTurnIndex];
         stateAfterMove.board = res.board;
         stateAfterMove.preparedBox = generatePreparedBox();
         return stateAfterMove;
