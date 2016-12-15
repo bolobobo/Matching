@@ -46,6 +46,7 @@ module game {
     export let draggingPiece: any = null;
     export let draggingPieceGroup: any[] = [];
     export let boardDragged: any = []; // to record which box has been moved to the board
+    //export let boardRotated: any = []; // to record which box has been rotated and the direction
     export let indication: number; // to indicate the cells in the same box when they are moved to board
     export let needToShrink: boolean = false; // At begginning, do not need to Shrink
     export let needToSettle: boolean = false;
@@ -53,6 +54,8 @@ module game {
     export let boardLayer1: string[][] = [];
     export let boardLayer2: string[][] = [];
     export let boardLayer3: string[][] = [];
+    export let touchStartTime: any; // denote the touch start timestamp, for rotate function
+    export let touchEndTime: any; // denote the touch end timestamp, for routate function
     /**
      * Register for the turnBasedService3.js file 
      */
@@ -74,6 +77,7 @@ module game {
         boardArea = document.getElementById("boardArea");
         gamePrepare = document.getElementById("gamePrepare");
         getInitialBoardDragged(); // initialize the boardDragged
+        //getInitialBoardRotated(); // initialize the boardRotated
         getInitialAllBoardLayer(); // initialize all the boardLayer to store the color of each layer in board
         getSquareWidthHeight();
         getSquareWidthHeight_Box();
@@ -119,6 +123,7 @@ module game {
             // because if we call aiService now
             // then the animation will be paused until the javascript finishes.
             getInitialBoardDragged(); // initialize the boardDragged
+            //getInitialBoardRotated(); // initialize the boardRotated
             getInitialAllBoardLayer(); // initialize all the boardLayer to store the color of each layer in board
             animationEndedTimeout = $timeout(animationEndedCallback, 500);
         }
@@ -295,6 +300,8 @@ module game {
                         // no piece be moved in this cell
                         return;
                     }
+                    touchStartTime = new Date().getTime();
+                    log.info("the time now is " + touchStartTime + "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&");
                     draggingStartedRowCol = {row: row, col: col, isInBoard: true, indication: ind, layer: layer};
                     computeBlockDeltas(draggingStartedRowCol, draggingStartedRowCol.isInBoard);
                     createDraggingPieceGroup(draggingStartedRowCol);
@@ -308,6 +315,8 @@ module game {
                 if (type === "touchend") {
                     let from = draggingStartedRowCol;
                     let to = {row: row, col: col};
+                    touchEndTime = new Date().getTime();
+                    log.info("the time now is " + touchEndTime + "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&");
                     dragDone(from, to, "BOARD");
                 } else {
                     // Drag continue
@@ -376,6 +385,8 @@ module game {
             needToShrink = false;
             isVertical = false;
             needToSettle = false;
+            touchStartTime = 0;
+            touchEndTime = 0;
 
             // BOLOBOBO
             // for(let i = 0; i < boardDragged.length; i++) {
@@ -748,7 +759,12 @@ module game {
                 return;
             } else {
                 // from board to board
-                movePieceToBoard(from, to);
+                if (isTouchTheCentralCell(from, to) && isRotateOperation()) {
+                    isVertical = false;
+                    rotatePiece(from, to);
+                } else {
+                    movePieceToBoard(from, to);
+                }  
             }
         } else {
             // Piece is horizontal
@@ -759,16 +775,142 @@ module game {
                 } 
                 // from board to prepared area
                 // from prepared to prepared
-                movePieceToPrepared(from, to);
+                movePieceToPrepared(from, to);      
             }
 
             if (dest === "BOARD") {
-                // from board to board
-                // from prepared to board
-                movePieceToBoard(from, to);
+
+                if (from.isInBoard) {
+                    if (isTouchTheCentralCell(from, to) && isRotateOperation()) {
+                        // from board to board: rotate piece
+                        isVertical = true;
+                        rotatePiece(from, to);
+                    } else {
+                        // from board to board
+                        movePieceToBoard(from, to);
+                    }
+                } else {
+                    // from prepared to board
+                    movePieceToBoard(from, to);
+                }
             }
         }
     }
+
+    function isTouchTheCentralCell(from: any, to: any): boolean {
+        if (from.row != to.row || from.col != to.col) {
+            return false;
+        }
+
+        if (blockDeltas[0].deltaCol === -1 && blockDeltas[1].deltaCol === 1 && !isVertical) {
+            return true;
+        }
+        if (blockDeltas[0].deltaRow === -1 && blockDeltas[1].deltaRow === 1 && isVertical) {
+            return true;
+        }
+        return false;
+    }
+
+    function isRotateOperation(): boolean {
+        if (touchEndTime - touchStartTime > 150) {
+            return false;
+        }
+        return true;
+    }
+
+    function rotatePiece(from: any, to: any) {
+        indication++;
+        boardDragged[to.row][to.col][indication] = boardDragged[from.row][from.col][from.indication];
+        if (isVertical) {
+            let newBlockDeltas = [
+                {deltaRow: 1, deltaCol: 0},
+                {deltaRow: -1, deltaCol: 0}];
+
+            if (isInsideBoard(to.row, to.col,newBlockDeltas)) {
+                for (let i = 0; i < blockDeltas.length; i++) {
+                    let oldRow = from.row + blockDeltas[i].deltaRow;
+                    let oldCol = from.col + blockDeltas[i].deltaCol;
+                    let color = boardDragged[oldRow][oldCol][from.indication];
+
+                    let newRow = to.row + newBlockDeltas[i].deltaRow;
+                    let newCol = to.col + newBlockDeltas[i].deltaCol;
+                    boardDragged[newRow][newCol][indication] = color;
+                }
+            } else {
+                for (let i = 0; i < blockDeltas.length; i++) {
+                    let oldRow = from.row + blockDeltas[i].deltaRow;
+                    let oldCol = from.col + blockDeltas[i].deltaCol;
+                    let color = boardDragged[oldRow][oldCol][from.indication];
+
+                    let newRow = to.row + blockDeltas[i].deltaRow;
+                    let newCol = to.col + blockDeltas[i].deltaCol;
+                    boardDragged[newRow][newCol][indication] = color;
+                }
+            }
+        } else {
+            let newBlockDeltas = [
+                {deltaRow: 0, deltaCol: -1},
+                {deltaRow: 0, deltaCol: 1}];
+            if (isInsideBoard(to.row, to.col,newBlockDeltas)) {
+                for (let i = 0; i < blockDeltas.length; i++) {
+                    let oldRow = from.row + blockDeltas[i].deltaRow;
+                    let oldCol = from.col + blockDeltas[i].deltaCol;
+                    let color = boardDragged[oldRow][oldCol][from.indication];
+
+                    let newRow = to.row + newBlockDeltas[i].deltaRow;
+                    let newCol = to.col + newBlockDeltas[i].deltaCol;
+                    boardDragged[newRow][newCol][indication] = color;
+                }
+            } else {
+                for (let i = 0; i < blockDeltas.length; i++) {
+                    let oldRow = from.row + blockDeltas[i].deltaRow;
+                    let oldCol = from.col + blockDeltas[i].deltaCol;
+                    let color = boardDragged[oldRow][oldCol][from.indication];
+
+                    let newRow = to.row + blockDeltas[i].deltaRow;
+                    let newCol = to.col + blockDeltas[i].deltaCol;
+                    boardDragged[newRow][newCol][indication] = color;
+                }
+            } 
+        }
+        // clear the color in the original place
+        clearOriginalPieceInBoard(from);
+        
+        //     if (isInsideBoard(to.row, to.col, blockDeltas)) {
+        //     indication++;
+        //     if (from.isInBoard) {
+        //         boardDragged[to.row][to.col][indication] = boardDragged[from.row][from.col][from.indication];
+        //     } else {
+        //         boardDragged[to.row][to.col][indication] = state.preparedBox[from.row][from.col];
+        //     }
+            
+        //     for (let i = 0; i < blockDeltas.length; i++) {
+        //         let oldRow = from.row + blockDeltas[i].deltaRow;
+        //         let oldCol = from.col + blockDeltas[i].deltaCol;
+        //         let color: string;
+
+        //         if (from.isInBoard) {
+        //             color = boardDragged[oldRow][oldCol][from.indication];
+        //         } else {
+        //             color = state.preparedBox[oldRow][oldCol];
+        //         }
+                  
+        //         let newRow = to.row + blockDeltas[i].deltaRow;
+        //         let newCol = to.col + blockDeltas[i].deltaCol;
+        //         boardDragged[newRow][newCol][indication] = color;
+        //     }
+        //     // clear the color in the original place
+        //     if (from.isInBoard) {
+        //         clearOriginalPieceInBoard(from);
+        //     } else {
+        //         clearOriginalPieceInPrepared(from);
+        //     }
+            
+        // } else {
+        //     return;
+        // }
+    }
+
 
     function movePieceToPrepared(from: any, to: any) {
         if (blockDeltas[0].deltaCol === 1 &&  blockDeltas[1].deltaCol === 2 ) {
@@ -869,6 +1011,19 @@ module game {
             }
         }
     }
+
+    // // Helper Function: initialize the boardRotated
+    // function getInitialBoardRotated() {
+    //     for (let i = 0; i < gameLogic.ROWS; i++) {
+    //         boardRotated[i] = [];
+    //         for (let j = 0; j < gameLogic.COLS; j++) {
+    //             // put the original color of the board into boardRotated
+    //             // use the map datastructure to store the layer and the rotated direction
+    //             boardRotated[i][j] = {};
+    //             // boardRotated[i][j] = {0: false};
+    //         }
+    //     }
+    // }
 
     function getSquareWidthHeight(): Size {
         boardSquareSize = {height: boardArea.clientWidth / colsNum, width: boardArea.clientWidth / rowsNum};
@@ -1010,10 +1165,12 @@ module game {
     export function getOpponentPlayerScore(): number {
         return state.currentScores[currentUpdateUI.yourPlayerIndex];
     }
+
     export function getCurrentPlayerScore(): number {
         let opponentPlayerIndex: number = 1 - currentUpdateUI.yourPlayerIndex;
         return state.currentScores[opponentPlayerIndex];
     }
+
     export function getCurrentTurn(): number {
         return 11-Math.floor(game.state.currentTurn/2);
     }

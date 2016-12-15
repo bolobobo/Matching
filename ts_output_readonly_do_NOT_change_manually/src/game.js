@@ -47,6 +47,7 @@ var game;
         game.boardArea = document.getElementById("boardArea");
         game.gamePrepare = document.getElementById("gamePrepare");
         getInitialBoardDragged(); // initialize the boardDragged
+        //getInitialBoardRotated(); // initialize the boardRotated
         getInitialAllBoardLayer(); // initialize all the boardLayer to store the color of each layer in board
         getSquareWidthHeight();
         getSquareWidthHeight_Box();
@@ -93,6 +94,7 @@ var game;
             // because if we call aiService now
             // then the animation will be paused until the javascript finishes.
             getInitialBoardDragged(); // initialize the boardDragged
+            //getInitialBoardRotated(); // initialize the boardRotated
             getInitialAllBoardLayer(); // initialize all the boardLayer to store the color of each layer in board
             game.animationEndedTimeout = $timeout(animationEndedCallback, 500);
         }
@@ -255,6 +257,8 @@ var game;
                     // no piece be moved in this cell
                     return;
                 }
+                game.touchStartTime = new Date().getTime();
+                log.info("the time now is " + game.touchStartTime + "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&");
                 game.draggingStartedRowCol = { row: row, col: col, isInBoard: true, indication: ind, layer: layer };
                 computeBlockDeltas(game.draggingStartedRowCol, game.draggingStartedRowCol.isInBoard);
                 createDraggingPieceGroup(game.draggingStartedRowCol);
@@ -266,6 +270,8 @@ var game;
             if (type === "touchend") {
                 var from = game.draggingStartedRowCol;
                 var to = { row: row, col: col };
+                game.touchEndTime = new Date().getTime();
+                log.info("the time now is " + game.touchEndTime + "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&");
                 dragDone(from, to, "BOARD");
             }
             else {
@@ -327,6 +333,8 @@ var game;
             game.needToShrink = false;
             game.isVertical = false;
             game.needToSettle = false;
+            game.touchStartTime = 0;
+            game.touchEndTime = 0;
         }
     }
     function changeUIForEachMove() {
@@ -652,7 +660,13 @@ var game;
             }
             else {
                 // from board to board
-                movePieceToBoard(from, to);
+                if (isTouchTheCentralCell(from, to) && isRotateOperation()) {
+                    game.isVertical = false;
+                    rotatePiece(from, to);
+                }
+                else {
+                    movePieceToBoard(from, to);
+                }
             }
         }
         else {
@@ -667,11 +681,126 @@ var game;
                 movePieceToPrepared(from, to);
             }
             if (dest === "BOARD") {
-                // from board to board
-                // from prepared to board
-                movePieceToBoard(from, to);
+                if (from.isInBoard) {
+                    if (isTouchTheCentralCell(from, to) && isRotateOperation()) {
+                        // from board to board: rotate piece
+                        game.isVertical = true;
+                        rotatePiece(from, to);
+                    }
+                    else {
+                        // from board to board
+                        movePieceToBoard(from, to);
+                    }
+                }
+                else {
+                    // from prepared to board
+                    movePieceToBoard(from, to);
+                }
             }
         }
+    }
+    function isTouchTheCentralCell(from, to) {
+        if (from.row != to.row || from.col != to.col) {
+            return false;
+        }
+        if (game.blockDeltas[0].deltaCol === -1 && game.blockDeltas[1].deltaCol === 1 && !game.isVertical) {
+            return true;
+        }
+        if (game.blockDeltas[0].deltaRow === -1 && game.blockDeltas[1].deltaRow === 1 && game.isVertical) {
+            return true;
+        }
+        return false;
+    }
+    function isRotateOperation() {
+        if (game.touchEndTime - game.touchStartTime > 150) {
+            return false;
+        }
+        return true;
+    }
+    function rotatePiece(from, to) {
+        game.indication++;
+        game.boardDragged[to.row][to.col][game.indication] = game.boardDragged[from.row][from.col][from.indication];
+        if (game.isVertical) {
+            var newBlockDeltas = [
+                { deltaRow: 1, deltaCol: 0 },
+                { deltaRow: -1, deltaCol: 0 }];
+            if (isInsideBoard(to.row, to.col, newBlockDeltas)) {
+                for (var i = 0; i < game.blockDeltas.length; i++) {
+                    var oldRow = from.row + game.blockDeltas[i].deltaRow;
+                    var oldCol = from.col + game.blockDeltas[i].deltaCol;
+                    var color = game.boardDragged[oldRow][oldCol][from.indication];
+                    var newRow = to.row + newBlockDeltas[i].deltaRow;
+                    var newCol = to.col + newBlockDeltas[i].deltaCol;
+                    game.boardDragged[newRow][newCol][game.indication] = color;
+                }
+            }
+            else {
+                for (var i = 0; i < game.blockDeltas.length; i++) {
+                    var oldRow = from.row + game.blockDeltas[i].deltaRow;
+                    var oldCol = from.col + game.blockDeltas[i].deltaCol;
+                    var color = game.boardDragged[oldRow][oldCol][from.indication];
+                    var newRow = to.row + game.blockDeltas[i].deltaRow;
+                    var newCol = to.col + game.blockDeltas[i].deltaCol;
+                    game.boardDragged[newRow][newCol][game.indication] = color;
+                }
+            }
+        }
+        else {
+            var newBlockDeltas = [
+                { deltaRow: 0, deltaCol: -1 },
+                { deltaRow: 0, deltaCol: 1 }];
+            if (isInsideBoard(to.row, to.col, newBlockDeltas)) {
+                for (var i = 0; i < game.blockDeltas.length; i++) {
+                    var oldRow = from.row + game.blockDeltas[i].deltaRow;
+                    var oldCol = from.col + game.blockDeltas[i].deltaCol;
+                    var color = game.boardDragged[oldRow][oldCol][from.indication];
+                    var newRow = to.row + newBlockDeltas[i].deltaRow;
+                    var newCol = to.col + newBlockDeltas[i].deltaCol;
+                    game.boardDragged[newRow][newCol][game.indication] = color;
+                }
+            }
+            else {
+                for (var i = 0; i < game.blockDeltas.length; i++) {
+                    var oldRow = from.row + game.blockDeltas[i].deltaRow;
+                    var oldCol = from.col + game.blockDeltas[i].deltaCol;
+                    var color = game.boardDragged[oldRow][oldCol][from.indication];
+                    var newRow = to.row + game.blockDeltas[i].deltaRow;
+                    var newCol = to.col + game.blockDeltas[i].deltaCol;
+                    game.boardDragged[newRow][newCol][game.indication] = color;
+                }
+            }
+        }
+        // clear the color in the original place
+        clearOriginalPieceInBoard(from);
+        //     if (isInsideBoard(to.row, to.col, blockDeltas)) {
+        //     indication++;
+        //     if (from.isInBoard) {
+        //         boardDragged[to.row][to.col][indication] = boardDragged[from.row][from.col][from.indication];
+        //     } else {
+        //         boardDragged[to.row][to.col][indication] = state.preparedBox[from.row][from.col];
+        //     }
+        //     for (let i = 0; i < blockDeltas.length; i++) {
+        //         let oldRow = from.row + blockDeltas[i].deltaRow;
+        //         let oldCol = from.col + blockDeltas[i].deltaCol;
+        //         let color: string;
+        //         if (from.isInBoard) {
+        //             color = boardDragged[oldRow][oldCol][from.indication];
+        //         } else {
+        //             color = state.preparedBox[oldRow][oldCol];
+        //         }
+        //         let newRow = to.row + blockDeltas[i].deltaRow;
+        //         let newCol = to.col + blockDeltas[i].deltaCol;
+        //         boardDragged[newRow][newCol][indication] = color;
+        //     }
+        //     // clear the color in the original place
+        //     if (from.isInBoard) {
+        //         clearOriginalPieceInBoard(from);
+        //     } else {
+        //         clearOriginalPieceInPrepared(from);
+        //     }
+        // } else {
+        //     return;
+        // }
     }
     function movePieceToPrepared(from, to) {
         if (game.blockDeltas[0].deltaCol === 1 && game.blockDeltas[1].deltaCol === 2) {
@@ -771,6 +900,18 @@ var game;
             }
         }
     }
+    // // Helper Function: initialize the boardRotated
+    // function getInitialBoardRotated() {
+    //     for (let i = 0; i < gameLogic.ROWS; i++) {
+    //         boardRotated[i] = [];
+    //         for (let j = 0; j < gameLogic.COLS; j++) {
+    //             // put the original color of the board into boardRotated
+    //             // use the map datastructure to store the layer and the rotated direction
+    //             boardRotated[i][j] = {};
+    //             // boardRotated[i][j] = {0: false};
+    //         }
+    //     }
+    // }
     function getSquareWidthHeight() {
         game.boardSquareSize = { height: game.boardArea.clientWidth / game.colsNum, width: game.boardArea.clientWidth / game.rowsNum };
         return {
