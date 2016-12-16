@@ -234,7 +234,7 @@ var gameLogic;
             // Game over.
             turnIndexAfterMove = -1;
             log.info("the winnner is " + winner + "**************************************");
-            endMatchScores = winner === '1' ? [1, 0] : winner === 'O' ? [0, 1] : [0, 0];
+            endMatchScores = winner === '1' ? [1, 0] : winner === '0' ? [0, 1] : [0, 0];
         }
         else {
             // Game continues. Now it's the opponent's turn (the turn switches to next player).
