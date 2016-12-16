@@ -299,7 +299,7 @@ module game {
                 // do not need to shrink the size of the cell
                 setDraggingPieceGroupTopLeft({top: y - boardSquareSize.height / 2, left: x - boardSquareSize.width / 2}, draggingStartedRowCol.isInBoard);
             }
-        } else if (y < boardArea.clientWidth + boardArea.clientWidth*0.0375) {
+        } else if (y < boardArea.clientWidth) {
                 // the touch in the board area but not in the prepared area
                 // Position: Inside board box area. Let's find the containing square's row and col
                 let row = Math.floor(rowsNum * y / boardArea.clientWidth);
@@ -340,7 +340,7 @@ module game {
                 //TODO: FROM BOARD TO BOARD AND FROM BOARD TO PREPARED
                 // MOVE FROM EVERYWHERE
                 // drag ended
-        } else {
+        } else{
             // Position: Inside prepared box area. Let's find the containing square's row and col
             let col = Math.floor(colsBox * x / boardArea.clientWidth) % rowsBox;
             let row = Math.floor(rowsBox * x / boardArea.clientWidth);

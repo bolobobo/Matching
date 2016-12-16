@@ -257,7 +257,7 @@ var game;
                 setDraggingPieceGroupTopLeft({ top: y - game.boardSquareSize.height / 2, left: x - game.boardSquareSize.width / 2 }, game.draggingStartedRowCol.isInBoard);
             }
         }
-        else if (y < game.boardArea.clientWidth + game.boardArea.clientWidth * 0.0375) {
+        else if (y < game.boardArea.clientWidth) {
             // the touch in the board area but not in the prepared area
             // Position: Inside board box area. Let's find the containing square's row and col
             var row = Math.floor(game.rowsNum * y / game.boardArea.clientWidth);
