@@ -233,6 +233,7 @@ var gameLogic;
         if (winner !== '' || isTie(stateAfterMove.board)) {
             // Game over.
             turnIndexAfterMove = -1;
+            log.info("the winnner is " + winner + "**************************************");
             endMatchScores = winner === '1' ? [1, 0] : winner === 'O' ? [0, 1] : [0, 0];
         }
         else {
