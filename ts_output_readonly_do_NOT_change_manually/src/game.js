@@ -116,7 +116,6 @@ var game;
         // 1) each cell in board has no more than one color;
         // 2) all the prepared boxes are on board;
         if (!checkStartMoveIsValid()) {
-            alert("the move is invalid");
             return;
         }
         var moves = generateMoves();
@@ -191,6 +190,8 @@ var game;
             for (var j = 0; j < gameLogic.COLS; j++) {
                 // check whether there are more than one piece in the same cell
                 if (computeLength(i, j) > 1) {
+                    //alert('CONFIRM' | translate );
+                    alert("There should be no more than one piece on the same cell.");
                     return false;
                 }
                 if (computeLength(i, j) == 1) {
@@ -200,6 +201,7 @@ var game;
         }
         // check whether all the prepard boxes have already been in board
         if (count != 9) {
+            alert("All the pieces should be on board.");
             return false;
         }
         return true;
@@ -543,13 +545,16 @@ var game;
     function computeIndicationAndLayer(row, col) {
         var ind = -1;
         var layer = 0;
-        for (var key in game.boardDragged[row][col]) {
-            if (game.boardDragged[row][col].hasOwnProperty(key)) {
-                if (parseInt(key) > ind) {
-                    ind = parseInt(key);
+        var length = computeLength(row, col);
+        if (length !== 0) {
+            for (var key in game.boardDragged[row][col]) {
+                if (game.boardDragged[row][col].hasOwnProperty(key)) {
+                    if (parseInt(key) > ind) {
+                        ind = parseInt(key);
+                    }
                 }
+                layer++;
             }
-            layer++;
         }
         return { ind: ind, layer: layer };
     }
