@@ -232,7 +232,7 @@ module gameLogic {
                 index = i;
             }
         }
-        return 1-index;
+        return index;
     }
 
     /**
@@ -273,7 +273,7 @@ module gameLogic {
         if (winner !== '' || isTie(stateAfterMove.board)) {
             // Game over.
             turnIndexAfterMove = -1;
-            endMatchScores = stateAfterMove.currentScores;
+            endMatchScores = winner === '1' ? [1, 0] : winner === 'O' ? [0, 1] : [0, 0];
         } else {
             // Game continues. Now it's the opponent's turn (the turn switches to next player).
             turnIndexAfterMove = currentTurnIndex;
@@ -435,6 +435,26 @@ module gameLogic {
         // }
     }
 
+    // Note: not sure, need to generate the 9 cells for the game
+    /**
+     * Generate the 3 prepared box for the player, one time just generate one box containing 3 cells
+     */
+    export function generatePreparedBox(): Box {
+        let box: Box = [];
+        for (let i = 0; i < 3; i++) {
+            box[i] = [];
+            for (let j = 0; j < 3; j++) {
+                box[i][j] = getRandomColor();
+                if (j === 2) {
+                    while (box[i][j] === box[i][j-1] && box[i][j] === box[i][j-2]) {
+                        box[i][j] = getRandomColor();
+                    }
+                }
+            }  
+        }
+        //log.log("this is generatePreparedBox");
+        return box;
+    }
     /**
      * Just for test, to call the checkMoveOk function
      */
@@ -479,26 +499,7 @@ module gameLogic {
     }
 
 
-    // Note: not sure, need to generate the 9 cells for the game
-    /**
-     * Generate the 3 prepared box for the player, one time just generate one box containing 3 cells
-     */
-    export function generatePreparedBox(): Box {
-        let box: Box = [];
-        for (let i = 0; i < 3; i++) {
-            box[i] = [];
-            for (let j = 0; j < 3; j++) {
-                box[i][j] = getRandomColor();
-                if (j === 2) {
-                    while (box[i][j] === box[i][j-1] && box[i][j] === box[i][j-2]) {
-                        box[i][j] = getRandomColor();
-                    }
-                }
-            }  
-        }
-        //log.log("this is generatePreparedBox");
-        return box;
-    }
+
 
     //TODO: Add the community function to make two group of people can play the same game
     // use proposal and majority
