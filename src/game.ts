@@ -1150,7 +1150,7 @@ module game {
     }
 
     export function getCurrentTurn(): number {
-        return 5-Math.floor(game.state.currentTurn/2);
+        return 3-Math.floor(game.state.currentTurn/2);
     }
 
     export function getMultiple(row: number, col: number): string {
@@ -1165,6 +1165,21 @@ module game {
         }
         if (row === 5 && col === 5) {
             return '2';
+        }
+        return '';
+    }
+        export function getMultipleX(row: number, col: number): string {
+        if (row === 2 && col === 2) {
+            return 'x';
+        }
+        if (row === 2 && col === 5) {
+            return 'x';
+        }
+        if (row === 5 && col === 2) {
+            return 'x';
+        }
+        if (row === 5 && col === 5) {
+            return 'x';
         }
         return '';
     }

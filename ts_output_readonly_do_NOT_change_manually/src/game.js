@@ -1032,7 +1032,7 @@ var game;
     }
     game.getCurrentPlayerScore = getCurrentPlayerScore;
     function getCurrentTurn() {
-        return 5 - Math.floor(game.state.currentTurn / 2);
+        return 3 - Math.floor(game.state.currentTurn / 2);
     }
     game.getCurrentTurn = getCurrentTurn;
     function getMultiple(row, col) {
@@ -1051,6 +1051,22 @@ var game;
         return '';
     }
     game.getMultiple = getMultiple;
+    function getMultipleX(row, col) {
+        if (row === 2 && col === 2) {
+            return 'x';
+        }
+        if (row === 2 && col === 5) {
+            return 'x';
+        }
+        if (row === 5 && col === 2) {
+            return 'x';
+        }
+        if (row === 5 && col === 5) {
+            return 'x';
+        }
+        return '';
+    }
+    game.getMultipleX = getMultipleX;
 })(game || (game = {}));
 angular.module('myApp', ['gameServices'])
     .run(function () {

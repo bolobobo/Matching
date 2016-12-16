@@ -3,7 +3,7 @@ var gameLogic;
     gameLogic.ROWS = 8;
     gameLogic.COLS = 8;
     gameLogic.PLAYERNUM = 2;
-    gameLogic.TOTALTURNS = 10;
+    gameLogic.TOTALTURNS = 6;
     gameLogic.COLORNUM = 4;
     /** Returns the initial Matching board, which is a ROWSxCOLS matrix containing 7 different color blocks */
     function getInitialBoard() {
