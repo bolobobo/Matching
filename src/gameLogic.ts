@@ -232,7 +232,7 @@ module gameLogic {
                 index = i;
             }
         }
-        return index;
+        return 1-index;
     }
 
     /**
