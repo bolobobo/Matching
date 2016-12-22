@@ -980,38 +980,59 @@ var game;
     function getPreparedBoxColor(row, col) {
         var color = game.state.preparedBox[row][col];
         if (color === 'R') {
-            return "rgb(255, 128, 170)";
+            //return "rgb(255, 128, 170)";
+            return "rgb(240,113,171)";
         }
         else if (color === 'G') {
-            return "rgb(71, 209, 71)";
+            //return "rgb(71, 209, 71)";
+            return "rgb(185,133,187)";
         }
         else if (color === 'B') {
-            return "rgb(51, 204, 255)";
+            // return "rgb(51, 204, 255)";
+            return "rgb(88,165,219)";
         }
         else if (color === 'Y') {
-            return "rgb(246, 246, 85)";
+            //return "rgb(246, 246, 85)";
+            return "rgb(243, 177, 97)";
         }
         else {
-            return "grey";
+            //return "grey";
+            return "rgb(247, 247, 247)";
         }
     }
     game.getPreparedBoxColor = getPreparedBoxColor;
     function getBoardColorAt_1_Layer(row, col) {
         var color = game.boardLayer1[row][col];
+        // if (color === 'R') {
+        //     return "rgb(255, 128, 170)";
+        // } else if (color === 'G') {
+        //     return "rgb(71, 209, 71)";
+        // } else if (color === 'B') {
+        //     return "rgb(51, 204, 255)";
+        // } else if (color === 'Y') {
+        //     return "rgb(246, 246, 85)";
+        // } else {
+        //     return "grey";
+        // }
         if (color === 'R') {
-            return "rgb(255, 128, 170)";
+            //return "rgb(255, 128, 170)";
+            return "rgb(240,113,171)";
         }
         else if (color === 'G') {
-            return "rgb(71, 209, 71)";
+            //return "rgb(71, 209, 71)";
+            return "rgb(185,133,187)";
         }
         else if (color === 'B') {
-            return "rgb(51, 204, 255)";
+            // return "rgb(51, 204, 255)";
+            return "rgb(88,165,219)";
         }
         else if (color === 'Y') {
-            return "rgb(246, 246, 85)";
+            //return "rgb(246, 246, 85)";
+            return "rgb(243, 177, 97)";
         }
         else {
-            return "grey";
+            //return "grey";
+            return "rgb(247, 247, 247)";
         }
     }
     game.getBoardColorAt_1_Layer = getBoardColorAt_1_Layer;

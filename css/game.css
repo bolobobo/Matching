@@ -30,28 +30,35 @@ textarea, input {
 
 .R {
   /*border: 0.5px solid grey;*/
-  background-color: rgb(255, 128, 170);
+  /*background-color: rgb(255, 128, 170);*/
+  background-color: rgb(240,113,171);
   border-radius: 10%;
   /*opacity: 0.8;*/
 }
 
 .G {
-  border: 12% solid grey;
-  background-color: rgb(71, 209, 71);
+  /*border: 1% solid grey;*/
+  /*background-color: rgb(71, 209, 71);*/
+  background-color: rgb(185,133,187);
+
+  /*border: 12% solid grey;*/
+  /*background-color: rgb(71, 209, 71);*/
   border-radius: 10%;
   /*opacity: 0.8;*/
 }
 
 .B {
   /*border: 0.5px solid grey;*/
-  background-color: rgb(51, 204, 255);
+  /*background-color: rgb(51, 204, 255);*/
+  background-color: rgb(88,165,219);
   border-radius: 10%;
   /*opacity: 0.8;*/
 }
 
 .Y {
   /*border: 0.5px solid grey;*/
-  background-color: rgb(246, 246, 85);
+  /*background-color: rgb(246, 246, 85);*/
+  background-color: rgb(243, 177, 97);
   border-radius: 10%;
   /*opacity: 0.8;*/
 }
@@ -88,7 +95,8 @@ html, body {
 
 .gameBox {
     border: 0.5px solid lightgrey;
-    background-color: lightgoldenrodyellow;
+    /*background-color: lightgoldenrodyellow;*/
+    background-color: rgb(247, 247, 247);
     border-radius: 10%;
 }
 
@@ -115,30 +123,30 @@ html, body {
     font-size: 2em;
 }
 
-.div-inline1 { 
+.div-inline1 {
     display:inline;
     font-size: 0.5em;
     font-weight: 900;
-} 
+}
 
-.div-inline2{ 
-    display:inline;
-    font-size: 0.5em; 
-    font-weight: 900;
-} 
-
-.div-inline3{ 
+.div-inline2{
     display:inline;
     font-size: 0.5em;
     font-weight: 900;
-} 
+}
+
+.div-inline3{
+    display:inline;
+    font-size: 0.5em;
+    font-weight: 900;
+}
 
 .currentPlayer {
-  color: #20B2AA;  
+  color: #20B2AA;
 }
 
 .opponentPlayer {
-  color: #20B2AA;  
+  color: #20B2AA;
 }
 #gameHelper button{
     border: 1px grey;
@@ -147,7 +155,9 @@ html, body {
 }
 .rowBox {
     border-left: 1px grey;
-    background-color: lightgoldenrodyellow;
+    /*background-color: lightgoldenrodyellow;*/
+    background-color: rgb(247, 247, 247);
+
 }
 
 .multiple {
@@ -168,8 +178,8 @@ html, body {
 }
 
 img {
-    width: 100%; 
-    height: 100%; 
+    width: 100%;
+    height: 100%;
     vertical-align: middle;
 }
 
