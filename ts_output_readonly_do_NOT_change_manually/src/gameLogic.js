@@ -3,7 +3,7 @@ var gameLogic;
     gameLogic.ROWS = 8;
     gameLogic.COLS = 8;
     gameLogic.PLAYERNUM = 2;
-    gameLogic.TOTALTURNS = 22;
+    gameLogic.TOTALTURNS = 6;
     gameLogic.COLORNUM = 4;
     /** Returns the initial Matching board, which is a ROWSxCOLS matrix containing 7 different color blocks */
     function getInitialBoard() {
@@ -233,7 +233,8 @@ var gameLogic;
         if (winner !== '' || isTie(stateAfterMove.board)) {
             // Game over.
             turnIndexAfterMove = -1;
-            endMatchScores = stateAfterMove.currentScores;
+            log.info("the winnner is " + winner + "**************************************");
+            endMatchScores = winner === '1' ? [1, 0] : winner === '0' ? [0, 1] : [0, 0];
         }
         else {
             // Game continues. Now it's the opponent's turn (the turn switches to next player).
@@ -265,7 +266,7 @@ var gameLogic;
         stateAfterMove.delta = angular.copy(moves);
         // compute the score and change the board
         var res = computeCurrentTurnScore(stateAfterMove.board);
-        stateAfterMove.currentScores[currentTurnIndex] = res.score + stateAfterMove.currentScores[currentTurnIndex];
+        stateAfterMove.currentScores[currentTurnIndex] = res.score * 10 + stateAfterMove.currentScores[currentTurnIndex];
         stateAfterMove.board = res.board;
         stateAfterMove.preparedBox = generatePreparedBox();
         return stateAfterMove;
@@ -383,6 +384,27 @@ var gameLogic;
         // }
     }
     gameLogic.checkMoveOk = checkMoveOk;
+    // Note: not sure, need to generate the 9 cells for the game
+    /**
+     * Generate the 3 prepared box for the player, one time just generate one box containing 3 cells
+     */
+    function generatePreparedBox() {
+        var box = [];
+        for (var i = 0; i < 3; i++) {
+            box[i] = [];
+            for (var j = 0; j < 3; j++) {
+                box[i][j] = getRandomColor();
+                if (j === 2) {
+                    while (box[i][j] === box[i][j - 1] && box[i][j] === box[i][j - 2]) {
+                        box[i][j] = getRandomColor();
+                    }
+                }
+            }
+        }
+        //log.log("this is generatePreparedBox");
+        return box;
+    }
+    gameLogic.generatePreparedBox = generatePreparedBox;
     /**
      * Just for test, to call the checkMoveOk function
      */
@@ -424,21 +446,5 @@ var gameLogic;
         log.log(isTie(temp_board));
     }
     gameLogic.forSimpleTestHtml = forSimpleTestHtml;
-    // Note: not sure, need to generate the 9 cells for the game
-    /**
-     * Generate the 3 prepared box for the player, one time just generate one box containing 3 cells
-     */
-    function generatePreparedBox() {
-        var box = [];
-        for (var i = 0; i < 3; i++) {
-            box[i] = [];
-            for (var j = 0; j < 3; j++) {
-                box[i][j] = getRandomColor();
-            }
-        }
-        //log.log("this is generatePreparedBox");
-        return box;
-    }
-    gameLogic.generatePreparedBox = generatePreparedBox;
 })(gameLogic || (gameLogic = {}));
 //# sourceMappingURL=gameLogic.js.map

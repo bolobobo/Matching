@@ -24,7 +24,7 @@ module gameLogic {
     export const ROWS = 8;
     export const COLS = 8;
     export const PLAYERNUM = 2
-    export const TOTALTURNS = 22;
+    export const TOTALTURNS = 6;
     export const COLORNUM = 4;
 
     /** Returns the initial Matching board, which is a ROWSxCOLS matrix containing 7 different color blocks */
@@ -273,7 +273,8 @@ module gameLogic {
         if (winner !== '' || isTie(stateAfterMove.board)) {
             // Game over.
             turnIndexAfterMove = -1;
-            endMatchScores = stateAfterMove.currentScores;
+            log.info("the winnner is " + winner + "**************************************")
+            endMatchScores = winner === '1' ? [1, 0] : winner === '0' ? [0, 1] : [0, 0];
         } else {
             // Game continues. Now it's the opponent's turn (the turn switches to next player).
             turnIndexAfterMove = currentTurnIndex;
@@ -304,7 +305,7 @@ module gameLogic {
         stateAfterMove.delta = angular.copy(moves);
         // compute the score and change the board
         let res = computeCurrentTurnScore(stateAfterMove.board);
-        stateAfterMove.currentScores[currentTurnIndex] = res.score + stateAfterMove.currentScores[currentTurnIndex];
+        stateAfterMove.currentScores[currentTurnIndex] = res.score * 10 + stateAfterMove.currentScores[currentTurnIndex];
         stateAfterMove.board = res.board;
         stateAfterMove.preparedBox = generatePreparedBox();
         return stateAfterMove;
@@ -435,6 +436,26 @@ module gameLogic {
         // }
     }
 
+    // Note: not sure, need to generate the 9 cells for the game
+    /**
+     * Generate the 3 prepared box for the player, one time just generate one box containing 3 cells
+     */
+    export function generatePreparedBox(): Box {
+        let box: Box = [];
+        for (let i = 0; i < 3; i++) {
+            box[i] = [];
+            for (let j = 0; j < 3; j++) {
+                box[i][j] = getRandomColor();
+                if (j === 2) {
+                    while (box[i][j] === box[i][j-1] && box[i][j] === box[i][j-2]) {
+                        box[i][j] = getRandomColor();
+                    }
+                }
+            }  
+        }
+        //log.log("this is generatePreparedBox");
+        return box;
+    }
     /**
      * Just for test, to call the checkMoveOk function
      */
@@ -479,21 +500,7 @@ module gameLogic {
     }
 
 
-    // Note: not sure, need to generate the 9 cells for the game
-    /**
-     * Generate the 3 prepared box for the player, one time just generate one box containing 3 cells
-     */
-    export function generatePreparedBox(): Box {
-        let box: Box = [];
-        for (let i = 0; i < 3; i++) {
-            box[i] = [];
-            for (let j = 0; j < 3; j++) {
-                box[i][j] = getRandomColor();
-            }  
-        }
-        //log.log("this is generatePreparedBox");
-        return box;
-    }
+
 
     //TODO: Add the community function to make two group of people can play the same game
     // use proposal and majority

@@ -72,6 +72,10 @@ var game;
             OPPONENT_SCORE: {
                 en: "Opponent",
                 zh: "对手",
+            },
+            CONFIRM: {
+                en: "Confirm",
+                zh: "确认",
             }
         };
     }
@@ -112,7 +116,6 @@ var game;
         // 1) each cell in board has no more than one color;
         // 2) all the prepared boxes are on board;
         if (!checkStartMoveIsValid()) {
-            alert("the move is invalid");
             return;
         }
         var moves = generateMoves();
@@ -187,6 +190,8 @@ var game;
             for (var j = 0; j < gameLogic.COLS; j++) {
                 // check whether there are more than one piece in the same cell
                 if (computeLength(i, j) > 1) {
+                    //alert('CONFIRM' | translate );
+                    alert("There should be no more than one piece on the same cell.");
                     return false;
                 }
                 if (computeLength(i, j) == 1) {
@@ -196,6 +201,7 @@ var game;
         }
         // check whether all the prepard boxes have already been in board
         if (count != 9) {
+            alert("All the pieces should be on board.");
             return false;
         }
         return true;
@@ -251,7 +257,7 @@ var game;
                 setDraggingPieceGroupTopLeft({ top: y - game.boardSquareSize.height / 2, left: x - game.boardSquareSize.width / 2 }, game.draggingStartedRowCol.isInBoard);
             }
         }
-        else if (y < game.boardArea.clientWidth + game.boardArea.clientWidth * 0.0375) {
+        else if (y < game.boardArea.clientWidth) {
             // the touch in the board area but not in the prepared area
             // Position: Inside board box area. Let's find the containing square's row and col
             var row = Math.floor(game.rowsNum * y / game.boardArea.clientWidth);
@@ -539,13 +545,16 @@ var game;
     function computeIndicationAndLayer(row, col) {
         var ind = -1;
         var layer = 0;
-        for (var key in game.boardDragged[row][col]) {
-            if (game.boardDragged[row][col].hasOwnProperty(key)) {
-                if (parseInt(key) > ind) {
-                    ind = parseInt(key);
+        var length = computeLength(row, col);
+        if (length !== 0) {
+            for (var key in game.boardDragged[row][col]) {
+                if (game.boardDragged[row][col].hasOwnProperty(key)) {
+                    if (parseInt(key) > ind) {
+                        ind = parseInt(key);
+                    }
                 }
+                layer++;
             }
-            layer++;
         }
         return { ind: ind, layer: layer };
     }
@@ -1028,9 +1037,41 @@ var game;
     }
     game.getCurrentPlayerScore = getCurrentPlayerScore;
     function getCurrentTurn() {
-        return 11 - Math.floor(game.state.currentTurn / 2);
+        return 3 - Math.floor(game.state.currentTurn / 2);
     }
     game.getCurrentTurn = getCurrentTurn;
+    function getMultiple(row, col) {
+        if (row === 2 && col === 2) {
+            return '2';
+        }
+        if (row === 2 && col === 5) {
+            return '2';
+        }
+        if (row === 5 && col === 2) {
+            return '2';
+        }
+        if (row === 5 && col === 5) {
+            return '2';
+        }
+        return '';
+    }
+    game.getMultiple = getMultiple;
+    function getMultipleX(row, col) {
+        if (row === 2 && col === 2) {
+            return 'x';
+        }
+        if (row === 2 && col === 5) {
+            return 'x';
+        }
+        if (row === 5 && col === 2) {
+            return 'x';
+        }
+        if (row === 5 && col === 5) {
+            return 'x';
+        }
+        return '';
+    }
+    game.getMultipleX = getMultipleX;
 })(game || (game = {}));
 angular.module('myApp', ['gameServices'])
     .run(function () {

@@ -36,17 +36,23 @@
                 <div class="div-inline3" ng-if="!game.isPassAndPlay()" ng-class="{currentPlayer: (game.isCurrentPlayerIndex(1) && game.isMyTurn()) || (game.isCurrentPlayerIndex(0) && !game.isMyTurn())}">{{ game.getOppoName() | translate }}: {{game.state.scores[1]}}</div> 
                 <div class="div-inline3" ng-if="game.isPassAndPlay()" >{{ 'OPPONENT_SCORE' | translate }}: {{game.getHighestScoreGlobally()}}</div>
                 <div style="clear:both"></div>-->
+                <!--<div class="div-inline1"
+                    ng-if="!game.isPassAndPlay()"
+                    ng-class="{currentPlayer: (game.isCurrentPlayerIndex(0) && game.isMyTurn()) || (game.isCurrentPlayerIndex(1) && !game.isMyTurn())}"> 
+                    {{ game.getName() | translate }}: {{game.getCurrentPlayerScore()}}
+                </div>-->
                 <div class="div-inline1 currentPlayer" 
-                ng-if="!game.isPassAndPlay()" > 
+                    ng-if="!game.isPassAndPlay()" > 
                     {{ 'YOUR_SCORE' | translate }}: {{game.getCurrentPlayerScore()}}
                 </div>
                 <div class="div-inline2">
                     &nbsp;&nbsp;{{'LEFT_TURNS' | translate}} : {{game.getCurrentTurn()}}&nbsp;&nbsp;
                 </div> 
+
                 <div class="div-inline3 opponentPlayer" 
-                ng-if="!game.isPassAndPlay()" 
-                ng-class="{currentPlayer: (game.isCurrentPlayerIndex(1) && game.isMyTurn()) || (game.isCurrentPlayerIndex(0) && !game.isMyTurn())}">
-                    {{ "OPPONENT_SCORE" | translate }}: {{game.getOpponentPlayerScore()}}
+                    ng-if="!game.isPassAndPlay()" 
+                    ng-class="{currentPlayer: (game.isCurrentPlayerIndex(1) && game.isMyTurn()) || (game.isCurrentPlayerIndex(0) && !game.isMyTurn())}">
+                    {{ 'OPPONENT_SCORE' | translate }}: {{game.getOpponentPlayerScore()}}
                 </div> 
                 <div style="clear:both">
                 </div>
@@ -68,6 +74,7 @@
                             ng-class="{slowlyAppear: game.shouldSlowlyAppear(row, col)}"
                             class = "{{game.getBoardBoxColor(row,col)}}"
                             id="MyPieceBoardOriginal{{row}}x{{col}}">
+                            <!--<p class="multiplex">{{game.getMultipleX(row, col)}}</p> <p class="multiple">{{game.getMultiple(row, col)}}</p>-->
                             <!--the first layer-->
                             <!--<div style="position:absolute; width:100%; height:100%;"> -->
                                 <svg style="position:absolute; width:96%; height:96%; top:2%; margin-left:2%"
@@ -153,7 +160,7 @@
         </div>
         <!--the operation menu of the game with the helper-->
         <div id="gameHelper" style="position: absolute; top: 92%; width: 90%; height:8%; margin-left: 5%">
-            <button type="button" class="start" ng-click="game.buttonClicked()" aria-label="start"><span aria-hidden="true">start</span></button>
+            <button type="button" class="start" ng-click="game.buttonClicked()" aria-label="start"><span aria-hidden="true">{{ 'CONFIRM' | translate }}</span></button>
         </div>
     </div>
 </body>

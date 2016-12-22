@@ -46,7 +46,6 @@ module game {
     export let draggingPiece: any = null;
     export let draggingPieceGroup: any[] = [];
     export let boardDragged: any = []; // to record which box has been moved to the board
-    //export let boardRotated: any = []; // to record which box has been rotated and the direction
     export let indication: number; // to indicate the cells in the same box when they are moved to board
     export let needToShrink: boolean = false; // At begginning, do not need to Shrink
     export let needToSettle: boolean = false;
@@ -102,6 +101,10 @@ module game {
             OPPONENT_SCORE: {
                 en: "Opponent",
                 zh: "对手",
+            },
+            CONFIRM: {
+                en: "Confirm",
+                zh: "确认",
             }
         };
     }
@@ -142,7 +145,7 @@ module game {
         // 1) each cell in board has no more than one color;
         // 2) all the prepared boxes are on board;
         if (!checkStartMoveIsValid()) {
-            alert("the move is invalid");
+            
             return;
         }
 
@@ -227,6 +230,8 @@ module game {
             for (let j = 0; j < gameLogic.COLS; j++) {
                 // check whether there are more than one piece in the same cell
                 if (computeLength(i, j) > 1) {
+                    //alert('CONFIRM' | translate );
+                    alert("There should be no more than one piece on the same cell.");
                     return false;
                 }
                 if (computeLength(i, j) == 1) {
@@ -236,6 +241,7 @@ module game {
         }
         // check whether all the prepard boxes have already been in board
         if (count != 9) {
+            alert("All the pieces should be on board.");
             return false;
         }
         return true;
@@ -293,7 +299,7 @@ module game {
                 // do not need to shrink the size of the cell
                 setDraggingPieceGroupTopLeft({top: y - boardSquareSize.height / 2, left: x - boardSquareSize.width / 2}, draggingStartedRowCol.isInBoard);
             }
-        } else if (y < boardArea.clientWidth + boardArea.clientWidth*0.0375) {
+        } else if (y < boardArea.clientWidth) {
                 // the touch in the board area but not in the prepared area
                 // Position: Inside board box area. Let's find the containing square's row and col
                 let row = Math.floor(rowsNum * y / boardArea.clientWidth);
@@ -334,7 +340,7 @@ module game {
                 //TODO: FROM BOARD TO BOARD AND FROM BOARD TO PREPARED
                 // MOVE FROM EVERYWHERE
                 // drag ended
-        } else {
+        } else{
             // Position: Inside prepared box area. Let's find the containing square's row and col
             let col = Math.floor(colsBox * x / boardArea.clientWidth) % rowsBox;
             let row = Math.floor(rowsBox * x / boardArea.clientWidth);
@@ -623,13 +629,16 @@ module game {
     function computeIndicationAndLayer(row: number, col: number): any {
         let ind: number = -1;
         let layer: number = 0;
-        for (let key in boardDragged[row][col]) {
-            if (boardDragged[row][col].hasOwnProperty(key)) {
-                if(parseInt(key) > ind) {
-                    ind = parseInt(key);
+        let length: number = computeLength(row, col);
+        if (length !== 0) {
+            for (let key in boardDragged[row][col]) {
+                if (boardDragged[row][col].hasOwnProperty(key)) {
+                    if(parseInt(key) > ind) {
+                        ind = parseInt(key);
+                    }
                 }
+                layer++;
             }
-            layer++;
         }
         return {ind: ind, layer: layer};
     }
@@ -1147,7 +1156,38 @@ module game {
     }
 
     export function getCurrentTurn(): number {
-        return 11-Math.floor(game.state.currentTurn/2);
+        return 3-Math.floor(game.state.currentTurn/2);
+    }
+
+    export function getMultiple(row: number, col: number): string {
+        if (row === 2 && col === 2) {
+            return '2';
+        }
+        if (row === 2 && col === 5) {
+            return '2';
+        }
+        if (row === 5 && col === 2) {
+            return '2';
+        }
+        if (row === 5 && col === 5) {
+            return '2';
+        }
+        return '';
+    }
+        export function getMultipleX(row: number, col: number): string {
+        if (row === 2 && col === 2) {
+            return 'x';
+        }
+        if (row === 2 && col === 5) {
+            return 'x';
+        }
+        if (row === 5 && col === 2) {
+            return 'x';
+        }
+        if (row === 5 && col === 5) {
+            return 'x';
+        }
+        return '';
     }
 }
 

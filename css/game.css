@@ -33,13 +33,18 @@ textarea, input {
   /*background-color: rgb(255, 128, 170);*/
   background-color: rgb(240,113,171);
   border-radius: 10%;
+  /*opacity: 0.8;*/
 }
 
 .G {
   /*border: 1% solid grey;*/
   /*background-color: rgb(71, 209, 71);*/
   background-color: rgb(185,133,187);
+
+  /*border: 12% solid grey;*/
+  /*background-color: rgb(71, 209, 71);*/
   border-radius: 10%;
+  /*opacity: 0.8;*/
 }
 
 .B {
@@ -55,6 +60,7 @@ textarea, input {
   /*background-color: rgb(246, 246, 85);*/
   background-color: rgb(243, 177, 97);
   border-radius: 10%;
+  /*opacity: 0.8;*/
 }
 
 
@@ -152,6 +158,23 @@ html, body {
     /*background-color: lightgoldenrodyellow;*/
     background-color: rgb(247, 247, 247);
 
+}
+
+.multiple {
+    display:inline;
+    margin: 15%;
+    text-align: center;
+    font-family: Georgia;
+    font-size: 2em;
+    color: lightgrey;
+}
+.multiplex {
+    display:inline;
+    margin: 15%;
+    text-align: center;
+    font-family: Georgia;
+    font-size: 1em;
+    color: lightgrey;
 }
 
 img {
