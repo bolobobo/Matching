@@ -184,7 +184,7 @@ img {
 }
 
 /* To prevent long-press that will bring up copy-paste dialog. */
-* {
+/** {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
@@ -194,17 +194,17 @@ img {
   -ms-touch-callout: none;
   touch-callout: none;
   outline: 0; /* To prevent blue-box outline after click: http://stackoverflow.com/questions/21719306/getting-rid-of-a-blue-box-around-button-when-pressed */
-}
+/*}
 textarea, input {
   -webkit-user-select: text !important;
   -moz-user-select: text !important;
   -ms-user-select: text !important;
   user-select: text !important;
-}
-
+}*/
+/*
 [ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
   display: none !important;
-}
+}*/
 
 /* Help screen uses a carousel and a modal dialog. */
 .carousel-indicators li {
