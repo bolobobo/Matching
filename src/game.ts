@@ -1177,7 +1177,7 @@ module game {
     }
 
     export function getCurrentTurn(): number {
-        return 3-Math.floor(game.state.currentTurn/2);
+        return 11-Math.floor(game.state.currentTurn/2);
     }
 
     export function getMultiple(row: number, col: number): string {

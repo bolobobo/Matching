@@ -32,6 +32,7 @@
     },
     "files": [
         "./src/aiService.ts",
+        "./src/gameLogic_test.ts",
         "./src/game.ts",
         "./src/gameLogic.ts",
         "./typings/angular-protractor/angular-protractor.d.ts",
