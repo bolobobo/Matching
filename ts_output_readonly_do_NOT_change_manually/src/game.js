@@ -1058,7 +1058,7 @@ var game;
     }
     game.getCurrentPlayerScore = getCurrentPlayerScore;
     function getCurrentTurn() {
-        return 3 - Math.floor(game.state.currentTurn / 2);
+        return 11 - Math.floor(game.state.currentTurn / 2);
     }
     game.getCurrentTurn = getCurrentTurn;
     function getMultiple(row, col) {

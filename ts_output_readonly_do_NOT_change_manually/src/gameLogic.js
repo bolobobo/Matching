@@ -3,7 +3,7 @@ var gameLogic;
     gameLogic.ROWS = 8;
     gameLogic.COLS = 8;
     gameLogic.PLAYERNUM = 2;
-    gameLogic.TOTALTURNS = 6;
+    gameLogic.TOTALTURNS = 22;
     gameLogic.COLORNUM = 4;
     /** Returns the initial Matching board, which is a ROWSxCOLS matrix containing 7 different color blocks */
     function getInitialBoard() {
@@ -370,18 +370,29 @@ var gameLogic;
         var stateBeforeMove = stateTransition.stateBeforeMove;
         var move = stateTransition.move;
         // to test the initial case
-        if (!stateBeforeMove && turnIndexBeforeMove === 0 &&
-            angular.equals(createInitialMove(), move)) {
-            return;
+        // if (!stateBeforeMove && turnIndexBeforeMove === 0 &&
+        //     angular.equals(createInitialMove(), move)) {
+        //         log.log("Initial case checkmove ok");
+        //         return;
+        // }
+        if (!stateBeforeMove) {
+            if (turnIndexBeforeMove === 0) {
+                return;
+            }
+            else {
+                throw new Error("First move should be done with turnIndexBeforeMove=0");
+            }
         }
         // to test the regular case
         var deltaValue = move.stateAfterMove.delta;
         //NOTE: test
         var expectedMove = createMove(stateBeforeMove, deltaValue, turnIndexBeforeMove);
-        // if (!angular.equals(move, expectedMove)) {
-        //     throw new Error("Expected move=" + angular.toJson(expectedMove, true) +
-        //         ", but got stateTransition=" + angular.toJson(stateTransition, true));
-        // }
+        log.info(expectedMove);
+        log.info(move);
+        if (!angular.equals(move, expectedMove)) {
+            throw new Error("Expected move=" + angular.toJson(expectedMove, true) +
+                ", but got stateTransition=" + angular.toJson(stateTransition, true));
+        }
     }
     gameLogic.checkMoveOk = checkMoveOk;
     // Note: not sure, need to generate the 9 cells for the game
